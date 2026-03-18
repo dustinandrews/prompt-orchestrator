@@ -35,6 +35,7 @@ Text I/O ensures debuggability; Structured logging required; MAJOR.MINOR.PATCH v
 ### VI. Python and preferred libraries first choice for backend implementation
 
 Primary backend stack: Python>=3.11, LiteLLM, SQLite, Pydantic v2, httpx instead of requests, rich for CLI polish, data transmission in JSON, user config file in simple key=val pairs or yaml, secret keys etc. go in key=val .env file.
+Every project should have a README.md with install instructions and brief examples of use. Typically; create a venv, install requirements, `pip install -e .`, executable --parameters.
 
 **Rationale**: Using battle tested language and libraries ensures reliability. Re-use across projects increases maintainability. 
 
