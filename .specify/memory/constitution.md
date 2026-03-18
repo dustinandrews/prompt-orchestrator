@@ -94,6 +94,15 @@ Only plan and implement one feature at a time. If a user spec has more than one 
 - NO Performance benchmarks. Test and tune if problems turn up later.
 - Live integration with working API keys provided in .env file when possible.
 
+**Error Handling Philosophy**
+- Fail fast: Crash immediately on unexpected conditions, don't limp along
+- Be loud: Errors go to stderr with clear, actionable messages
+- Show the gory details: Full stack traces by default, no hiding failures
+- No silent failures: If something breaks, make sure everyone knows
+- Debuggable first: Optimize for understanding problems, not hiding them
+
+**Rationale**: Hidden failures waste more time than visible crashes. Full context enables faster debugging. Better to know something broke than wonder why results are wrong.
+
 
 ## Governance
 
