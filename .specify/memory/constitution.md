@@ -1,50 +1,101 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Library-First
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Modularity enables independent development, testing, and reuse across different contexts. Organizational-only libraries create unnecessary coupling and reduce maintainability.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. CLI Interface
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: CLI interfaces make libraries accessible to both humans and automation. Text protocols ensure debuggability and interoperability across environments.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Test-First (NON-NEGOTIABLE)
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Test-first ensures requirements are understood before implementation, prevents over-engineering, and creates a safety net for refactoring. No exceptions for critical paths.
+
+### IV. Integration Testing
+
+Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas.
+
+**Rationale**: Integration tests validate that components work together correctly. Critical for detecting breaking changes in contracts and ensuring system-level reliability.
+
+### V. Observability
+
+Text I/O ensures debuggability; Structured logging required; MAJOR.MINOR.PATCH version format; Start simple, YAGNI principles.
+
+**Rationale**: Observable systems are maintainable systems. Semantic versioning communicates breaking changes clearly. Simplicity reduces cognitive load and maintenance burden.
+
+### VI. Python and preferred libraries first choice for backend implementation
+
+Primary backend stack: Python>=3.11, LiteLLM, SQLite, Pydantic v2, httpx instead of requests, rich for CLI polish, data transmission in JSON, user config file in simple key=val pairs or yaml, secret keys etc. go in key=val .env file.
+
+**Rationale**: Using battle tested language and libraries ensures reliability. Re-use across projects increases maintainability. 
+
+### VII. Never Commit Secrets to Git
+
+Secrets detection mandatory - scan before commit; .env files in .gitignore by default; Use environment variables or secure vaults; Rotate compromised credentials immediately.
+
+**Rationale**: Version control is forever - exposed secrets create permanent attack vectors. Proactive scanning prevents costly incident response and maintains trust boundaries.
+
+### VIII. MVP-Focus ship quick, fail fast, pivot early
+
+Prove value before expanding; Ship working code in hours, not days; Explicit failure criteria defined upfront; Cut scope aggressively when `future proofing` creeps in.
+
+Rationale: Real usage validates assumptions faster than planning. Minimal scope prevents over-engineering and delivers tangible progress quickly. Failed experiments teach more than successful speculation. Slow is smooth and smooth is fast.
+
+### IX. Battle-Tested Over Build-From-Scratch
+
+Prefer proven libraries with >1 year production history and active maintenance; MIT/Apache/BSD licenses only (no GPL/viral); Evaluate integration cost vs build cost honestly; Skip if library solves <70% of your requirements or needs heavy customization.
+
+**Rationale**: Mature libraries carry proven reliability and edge-case handling you haven't discovered yet. Time spent on domain-specific features beats rebuilding solved problems. Selective adoption prevents dependency bloat while accelerating delivery. Docker pull takes minutes if the container is right (or a couple more minutes to try and discard).
+
+### X. K.I.S.S principle
+
+Never over-engineer. Unless otherwise specified consider all programs to be internal tools for engineering use. Keep it clean, strip off anything you don't need.
+
+**Rationale**: More stuff is more chances to get confused or break things. Less is more.
+
+### XI. One thing at a time
+
+Only plan and implement one feature at a time. If a user spec has more than one work item, pick the most core item not yet done. Finish that, come back for the rest later. Be ruthless about cutting and punting.
+
+**Rationale**: User's don't know what they want until they get something they can use. Give them the core and iterate. It's the proven M.V.P. strategy.
+
+
+## Security Requirements
+
+**Authentication & Authorization**
+- Prototype level protections. Stub out security implementations at most
+
+**Data Protection**
+- Prototype level protections. Stub out security implementations at most
+
+**Compliance**
+- Prototype level protections. Stub out security implementations at most
+
+## Development Workflow
+
+**Code Quality Gates**
+- Automated test suite must pass with minimum 80% code coverage
+- Documentation updates required for all user-facing changes
+
+**Testing Discipline**
+- Unit tests for all business logic
+- Integration tests for all library contracts
+- Contract tests for inter-service communication
+- NO Performance benchmarks. Test and tune if problems turn up later.
+- Live integration with working API keys provided in .env file when possible.
+
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Constitution Supremacy**
+This constitution supersedes all other development practices and guidelines. All team members must understand and adhere to these principles.
+Documented exceptions are allowed with team leader consent. Always get signoff for deviations.
