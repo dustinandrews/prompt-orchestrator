@@ -98,6 +98,7 @@ class OpenCodeExecutor:
         self.step_n_extra = step_n_extra or []
         self.max_retries_per_validation = 3
         self.retry_counters = {}  # validation_step_index -> retry_count
+        self.review_file_to_attach = None  # Track review file for retry attachment
         
         self._load_yaml()
         self._validate_start_step()
@@ -176,7 +177,41 @@ class OpenCodeExecutor:
             return False, f"Missing required files: {', '.join(missing)}"
         
         print(f"Verified files in {feature_dir}: {files}")
+        
+        # Check for PASS/FAIL markers in review files
+        for file_path in files:
+            if file_path.endswith('-review.md'):
+                success, error_msg = self._check_review_status(feature_dir / file_path, file_path)
+                if not success:
+                    return False, error_msg
+        
         return True, None
+    
+    def _check_review_status(self, file_path: Path, file_name: str) -> tuple:
+        """Check review file for PASS/FAIL marker. Returns (success, error_msg)."""
+        try:
+            content = file_path.read_text()
+            
+            # Look for STATUS: PASS or STATUS: FAIL
+            import re
+            match = re.search(r'^STATUS:\s*(PASS|FAIL)', content, re.MULTILINE | re.IGNORECASE)
+            
+            if not match:
+                return False, f"{file_name}: No STATUS marker found (expected 'STATUS: PASS' or 'STATUS: FAIL')"
+            
+            status = match.group(1).upper()
+            
+            if status == "PASS":
+                print(f"  Review {file_name}: PASS")
+                return True, None
+            else:
+                # Extract reason if provided
+                reason_match = re.search(r'^If FAIL:\s*(.+)$', content, re.MULTILINE | re.IGNORECASE)
+                reason = reason_match.group(1) if reason_match else "Review marked as FAIL"
+                return False, f"{file_name}: FAIL - {reason}"
+        
+        except Exception as e:
+            return False, f"{file_name}: Error reading file - {str(e)}"
     
     def verify_implementation(self) -> tuple:
         """Check that implementation files exist and don't contain placeholders. Returns (success, error_msg)."""
@@ -269,6 +304,9 @@ class OpenCodeExecutor:
                 step_n_context = self.step_n_extra
                 print(f"  [CONTEXT] Adding extra info: {' '.join(self.step_n_extra)}")
             
+            # Reset review file tracker
+            self.review_file_to_attach = None
+            
             try:
                 if cmd.command.startswith("-*-verify-*-implementation"):
                     success, error_msg = self.verify_implementation()
@@ -278,12 +316,28 @@ class OpenCodeExecutor:
                     success, error_msg = self.verify_files(cmd.files)
                     if not success:
                         exit_code = 1
+                        # Track which review file failed for attachment
+                        if cmd.files:
+                            for f in cmd.files:
+                                if f.endswith('-review.md'):
+                                    self.review_file_to_attach = f
+                                    break
                 else:
                     resolved_model = self._resolve_model(cmd.model)
+                    # Build file list including review file if retrying
+                    files_to_attach = cmd.files or []
+                    if self.review_file_to_attach and self.start_step_override:
+                        # Find feature dir and add review file path
+                        feature_dir = self._get_feature_dir()
+                        if feature_dir:
+                            review_path = f"{feature_dir}/{self.review_file_to_attach}"
+                            if review_path not in files_to_attach:
+                                files_to_attach = list(files_to_attach) + [review_path]
+                    
                     exit_code = self.execute_command(
                         cmd.command, 
                         model=resolved_model, 
-                        files=cmd.files,
+                        files=files_to_attach,
                         extra=step_n_context
                     )
             except Exception as e:
