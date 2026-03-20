@@ -101,7 +101,7 @@ def main():
     template_dir = setup_dir.parent
     workspace_dir = template_dir.parent
     
-    project_slug = slugify(args.project_name)
+    project_slug = slugify(args.project_name) 
     project_dir = workspace_dir / project_slug
     
     # Check if project already exists
@@ -121,7 +121,7 @@ def main():
     generate_run_sh(setup_dir, project_dir, args.spec)
     
     # Copy skeleton
-    skeleton_src = template_dir / "project"
+    skeleton_src = template_dir
     skeleton_dst = project_dir / project_slug
     if skeleton_src.exists():
         shutil.copytree(skeleton_src, skeleton_dst)
