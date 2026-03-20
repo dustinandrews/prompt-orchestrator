@@ -63,6 +63,23 @@ def copy_spec_file(project_dir: Path, spec_path: str) -> None:
     print(f"Copied spec: {dest}")
 
 
+def copy_runner_files(setup_dir: Path, project_dir: Path) -> None:
+    """Copy runner script and YAML to .run/ for local execution."""
+    run_dir = project_dir / ".run"
+    run_dir.mkdir(exist_ok=True)
+    
+    runner_src = setup_dir / "run_steps.py"
+    yaml_src = setup_dir / "steps.yaml"
+    
+    if runner_src.exists():
+        shutil.copy2(runner_src, run_dir / "run_steps.py")
+        print(f"Copied runner to: {run_dir}/run_steps.py")
+    
+    if yaml_src.exists():
+        shutil.copy2(yaml_src, run_dir / "steps.yaml")
+        print(f"Copied workflow to: {run_dir}/steps.yaml")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Setup a new FullAutoTemplate project"
@@ -100,10 +117,12 @@ def main():
     
     copy_spec_file(project_dir, args.spec_path)
     
+    copy_runner_files(setup_dir, project_dir)
+    
     print(f"\nProject '{args.project_name}' created successfully!")
     print(f"Next steps:")
     print(f"  cd {project_dir}")
-    print(f"  python3 ../FullAutoTemplate/.setup/run_steps.py")
+    print(f"  python3 .run/run_steps.py")
 
 
 if __name__ == "__main__":

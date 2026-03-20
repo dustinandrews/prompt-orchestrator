@@ -1,9 +1,16 @@
 title: "{project_name}"
 log_level: DEBUG #"DEBUG", "INFO", "WARN", "ERROR"
 message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
+models:
+  - reviewer-model:
+      model: "moonshotai/kimi-k2-turbo-preview"
+  - coder-model:
+      model: "ollama/qwen3.5:35b"
+  
+
 commands:
   - command: "/speckit.specify"
-    model: "moonshotai/kimi-k2-turbo-preview"
+    model: reviewer-model
     files:
       - ".opencode/command/speckit.specify.md"
       - ".specify/templates/spec-template.md"
@@ -20,7 +27,7 @@ commands:
       - "spec.md"
 
   - command: "/speckit.spec-review"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.spec-review.md"
       - ".specify/templates/spec-review-template.md"
@@ -29,7 +36,7 @@ commands:
     model: null
 
   - command: "/speckit.plan"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.plan.md"
       - ".specify/templates/plan-template.md"
@@ -40,7 +47,7 @@ commands:
       - "plan.md"
 
   - command: "/speckit.plan-review"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.plan-review.md"
       - ".specify/templates/plan-review-template.md"
@@ -49,7 +56,7 @@ commands:
     model: null
 
   - command: "/speckit.tasks"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.tasks.md"
       - ".specify/templates/tasks-template.md"
@@ -60,12 +67,12 @@ commands:
       - "tasks.md"
 
   - command: "/speckit.analyze"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.analyze.md"
 
   - command: "/speckit.tasks-review"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.tasks-review.md"
       - ".specify/templates/tasks-review-template.md"
@@ -74,7 +81,7 @@ commands:
     model: null
 
   - command: "/speckit.implement"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.implement.md"
 
@@ -85,11 +92,11 @@ commands:
     model: null
 
   - command: "/speckit.test-review"
-    model: "ollama/qwen3.5:35b"
+    model: coder-model
     files:
       - ".opencode/command/speckit.test-review.md"
 
   - command: "/speckit.product-review"
-    model: "moonshotai/kimi-k2-turbo-preview"
+    model: reviewer-model
     files:
       - ".opencode/command/speckit.product-review.md"
