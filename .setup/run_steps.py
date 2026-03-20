@@ -31,10 +31,16 @@ class OpenCodeExecutor:
     """Executes opencode workflow from YAML configuration."""
     
     def __init__(self, yaml_path: str = None, start_step: int = 1, step_n_extra: list = None):
-        # Default to steps.yaml in same directory as this script
+        # Default: look for ._agents_not_allowed/steps.yaml in CWD
         if yaml_path is None:
-            script_dir = Path(__file__).parent.resolve()
-            self.yaml_path = script_dir / "steps.yaml"
+            cwd = Path.cwd()
+            hidden_config = cwd / "._agents_not_allowed" / "steps.yaml"
+            if hidden_config.exists():
+                self.yaml_path = hidden_config
+            else:
+                # Fall back to same directory as script
+                script_dir = Path(__file__).parent.resolve()
+                self.yaml_path = script_dir / "steps.yaml"
         else:
             self.yaml_path = Path(yaml_path)
         
@@ -189,7 +195,7 @@ class OpenCodeExecutor:
                 continue
             
             print(f"\n{'='*60}")
-            print(f"Step {i}/{len(self.commands)}")
+            print(f"Step {i}/{len(self.commands)} - {cmd.command}")
             print(f"{'='*60}")
             
             exit_code = 0

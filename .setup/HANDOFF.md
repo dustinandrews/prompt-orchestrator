@@ -342,6 +342,9 @@ Commands now reference aliases (`reviewer-model`, `coder-model`) instead of lite
 **4. Bug Discovered & Fixed**
 Speckit puts specs in `specs/001-feature-name/`, not root. Runner now discovers feature directory dynamically and verifies files there.
 
+**5. Verify Implementation Working**
+The `-*-verify-*-implementation` checkpoint command is functional - successfully detected placeholder content in init.py during test runs.
+
 ### Current Status
 - Step 1 complete: Feature created (`001-console-snake-game`)
 - Step 2 in progress: Verify spec.md exists in feature dir
