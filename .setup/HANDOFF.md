@@ -293,4 +293,19 @@ bash .run/run.sh
    - Test Option A (cd to project dir before opencode)
    - Verify agents see skeleton files in context
 
+---
+
+## Internal Notes (Not for Publication)
+
+**2026-03-20 - Ant Colony Observation**
+Watching daughter's ant show. Complex systems built from simple rules, local interactions, no central brain. 
+
+FullAutoTemplate parallels:
+- Narrow phase scope = simple ant rules
+- Verify gates = local interaction checks
+- No "smart" orchestrator needed
+- System survives individual agent failures
+
+The insight validates the design. Complex reliable systems from simple constrained parts.
+
 
