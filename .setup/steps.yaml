@@ -5,7 +5,8 @@ models:
   - reviewer-model:
       model: "moonshotai/kimi-k2-turbo-preview"
   - coder-model:
-      model: "ollama/qwen3.5:35b"
+      model: "groq/openai/gpt-oss-20b"
+      #"ollama/qwen3.5:35b"
   
 
 commands:
@@ -33,7 +34,7 @@ commands:
       - ".specify/templates/spec-review-template.md"
 
   - command: "/compact"
-    model: null
+    model: coder-model
 
   - command: "/speckit.plan"
     model: coder-model
@@ -53,7 +54,7 @@ commands:
       - ".specify/templates/plan-review-template.md"
 
   - command: "/compact"
-    model: null
+    model: coder-model
 
   - command: "/speckit.tasks"
     model: coder-model
@@ -78,7 +79,7 @@ commands:
       - ".specify/templates/tasks-review-template.md"
 
   - command: "/compact"
-    model: null
+    model: coder-model
 
   - command: "/speckit.implement"
     model: coder-model
@@ -89,7 +90,7 @@ commands:
     model: null
     
   - command: "/compact"
-    model: null
+    model: coder-model
 
   - command: "/speckit.test-review"
     model: coder-model

@@ -308,4 +308,48 @@ FullAutoTemplate parallels:
 
 The insight validates the design. Complex reliable systems from simple constrained parts.
 
+---
+
+## Update: Active Test Run (2026-03-20)
+
+**Test Project:** snake (Console Snake Game)
+**Test Spec:** `/home/nanobot/.nanobot/workspace/projects/FullAutoTemplate/.specs/PythonSnakeGame.md`
+**Model:** GPT-OSS-20B (replacing Qwen for speed test)
+
+### Changes Made Today
+
+**1. Model Aliases in YAML**
+```yaml
+models:
+  - reviewer-model:
+      model: "moonshotai/kimi-k2-turbo-preview"
+  - coder-model:
+      model: "ollama/qwen3.5:35b"
+```
+Commands now reference aliases (`reviewer-model`, `coder-model`) instead of literal strings.
+
+**2. Runner Updates (run_steps.py)**
+- Resolves model aliases to actual model strings at execution
+- Fixed YAML path: defaults to script directory (`.run/steps.yaml`)
+- Fixed verify_files: only checks `specs/{feature-dir}/`, not root
+- Root specs considered wrong - feature directory is canonical
+
+**3. Setup.py Updates**
+- Copies `run_steps.py` and `steps.yaml` to `.run/` in project
+- Each project has isolated copies for concurrent experiments
+- Instructions updated: `python3 .run/run_steps.py`
+
+**4. Bug Discovered & Fixed**
+Speckit puts specs in `specs/001-feature-name/`, not root. Runner now discovers feature directory dynamically and verifies files there.
+
+### Current Status
+- Step 1 complete: Feature created (`001-console-snake-game`)
+- Step 2 in progress: Verify spec.md exists in feature dir
+- 18 total steps in workflow
+
+### Next Session Notes
+- Test is running - check snake project status
+- GPT-OSS-20B vs Qwen comparison pending
+- If successful, validates full pipeline end-to-end
+
 
