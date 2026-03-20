@@ -52,7 +52,6 @@ Create `specs/XXX-feature/plan-review.md`:
 
 **Date**: [DATE]
 **Reviewer**: speckit.plan-review
-**Status**: [PASS | NEEDS_REVISION | REJECT]
 
 ## Complexity Score
 - **Tasks**: [N] 
@@ -71,13 +70,10 @@ Create `specs/XXX-feature/plan-review.md`:
 ### Task Issues
 1. **Task [N]**: [Issue] → **Fix**: [Simplification]
 
-## Required Changes
-- [ ] [Specific change with justification]
+## Review Result
+STATUS: [PASS | FAIL]
 
-## Approval
-**Approved for tasks**: [YES | NO - revise first]
-
-**If NO**: Fix issues, regenerate, re-review
+If FAIL: [one sentence reason for failure]
 ```
 
 ## Rules

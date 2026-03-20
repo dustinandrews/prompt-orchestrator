@@ -37,14 +37,13 @@ Review the feature specification for compliance with project constitution and id
 
 ## Output
 
-Create `specs/XXX-feature/review.md`:
+Create `specs/XXX-feature/spec-review.md`:
 
 ```markdown
 # Specification Review: [FEATURE NAME]
 
 **Date**: [DATE]
 **Reviewer**: speckit.spec-review
-**Status**: [PASS | NEEDS_REVISION | REJECT]
 
 ## Findings
 
@@ -54,10 +53,10 @@ Create `specs/XXX-feature/review.md`:
 ### Constitution Violations
 1. **[PRINCIPLE]**: [How spec violates] → **Fix**: [Required change]
 
-## Recommended Actions
-- [ ] Revise spec to address findings
-- [ ] Re-run /speckit.spec-review
-- [ ] Proceed to /speckit.plan when PASS
+## Review Result
+STATUS: [PASS | FAIL]
+
+If FAIL: [one sentence reason for failure]
 ```
 
 ## Rules

@@ -35,6 +35,12 @@ commands:
       - ".opencode/command/speckit.spec-review.md"
       - ".specify/templates/spec-review-template.md"
 
+  - command: "-*-verify-*-"
+    model: null
+    files:
+      - "spec-review.md"
+    retry_step_on_fail: "/speckit.spec-review"
+
   - command: "/compact"
     model: coder-model
 
@@ -55,6 +61,12 @@ commands:
     files:
       - ".opencode/command/speckit.plan-review.md"
       - ".specify/templates/plan-review-template.md"
+
+  - command: "-*-verify-*-"
+    model: null
+    files:
+      - "plan-review.md"
+    retry_step_on_fail: "/speckit.plan"
 
   - command: "/compact"
     model: coder-model
@@ -82,6 +94,12 @@ commands:
       - ".opencode/command/speckit.tasks-review.md"
       - ".specify/templates/tasks-review-template.md"
 
+  - command: "-*-verify-*-"
+    model: null
+    files:
+      - "tasks-review.md"
+    retry_step_on_fail: "/speckit.tasks"
+
   - command: "/compact"
     model: coder-model
 
@@ -101,10 +119,22 @@ commands:
     model: coder-model
     files:
       - ".opencode/command/speckit.test-review.md"
+      - ".specify/templates/test-review-template.md"
+
+  - command: "-*-verify-*-"
+    model: null
+    files:
+      - "test-review.md"
     retry_step_on_fail: "/speckit.implement"
 
   - command: "/speckit.product-review"
     model: reviewer-model
     files:
       - ".opencode/command/speckit.product-review.md"
+      - ".specify/templates/product-review-template.md"
+
+  - command: "-*-verify-*-"
+    model: null
+    files:
+      - "product-review.md"
     retry_step_on_fail: "/speckit.implement"

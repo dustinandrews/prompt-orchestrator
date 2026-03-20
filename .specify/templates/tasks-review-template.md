@@ -50,7 +50,6 @@ Create `specs/XXX-feature/tasks-review.md`:
 
 **Date**: [DATE]
 **Reviewer**: speckit.tasks-review
-**Status**: [PASS | NEEDS_REVISION | REJECT]
 
 ## Metrics
 - **Total Tasks**: [N]
@@ -74,9 +73,10 @@ Create `specs/XXX-feature/tasks-review.md`:
 |------|----------|---------------|
 | [Description] | [P1/P2] | [Why needed] |
 
-## Approval
-**Ready for implementation**: [YES | NO]
-**If NO**: Fix issues, regenerate tasks, re-review
+## Review Result
+STATUS: [PASS | FAIL]
+
+If FAIL: [one sentence reason for failure]
 ```
 
 ## Rules
