@@ -1,0 +1,46 @@
+format: json
+quiet: true
+log_level: DEBUG
+message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
+commands:
+  - command: "/speckit.specify {{SPEC}}"
+    model: "moonshotai/kimi-k2-turbo-preview"
+
+  - command: "/speckit.spec-review"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/compact"
+    model: null
+
+  - command: "/speckit.plan"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/speckit.plan-review"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/compact"
+    model: null
+
+  - command: "/speckit.tasks"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/speckit.analyze"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/speckit.tasks-review"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/compact"
+    model: null
+
+  - command: "/speckit.implement"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/compact"
+    model: null
+
+  - command: "/speckit.test-review"
+    model: "ollama/qwen3.5:35b"
+
+  - command: "/speckit.product-review"
+    model: "moonshotai/kimi-k2-turbo-preview"
