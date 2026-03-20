@@ -1,6 +1,7 @@
 title: "{project_name}"
 log_level: DEBUG #"DEBUG", "INFO", "WARN", "ERROR"
 message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
+max_retries_per_validation: 3
 models:
   - reviewer-model:
       model: "moonshotai/kimi-k2-turbo-preview"
@@ -26,6 +27,7 @@ commands:
     model: null
     files:
       - "spec.md"
+    retry_step_on_fail: "/speckit.specify"
 
   - command: "/speckit.spec-review"
     model: coder-model
@@ -46,6 +48,7 @@ commands:
     model: null
     files:
       - "plan.md"
+    retry_step_on_fail: "/speckit.plan"
 
   - command: "/speckit.plan-review"
     model: coder-model
@@ -66,6 +69,7 @@ commands:
     model: null
     files:
       - "tasks.md"
+    retry_step_on_fail: "/speckit.tasks"
 
   - command: "/speckit.analyze"
     model: coder-model
@@ -88,6 +92,7 @@ commands:
 
   - command: "-*-verify-*-implementation" # check that stub files are filled in, fail and bail if not.
     model: null
+    retry_step_on_fail: "/speckit.implement"
     
   - command: "/compact"
     model: coder-model
@@ -96,8 +101,10 @@ commands:
     model: coder-model
     files:
       - ".opencode/command/speckit.test-review.md"
+    retry_step_on_fail: "/speckit.implement"
 
   - command: "/speckit.product-review"
     model: reviewer-model
     files:
       - ".opencode/command/speckit.product-review.md"
+    retry_step_on_fail: "/speckit.implement"
