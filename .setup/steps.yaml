@@ -1,46 +1,95 @@
-format: json
-quiet: true
-log_level: DEBUG
+title: "{project_name}"
+log_level: DEBUG #"DEBUG", "INFO", "WARN", "ERROR"
 message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
 commands:
-  - command: "/speckit.specify {{SPEC}}"
+  - command: "/speckit.specify"
     model: "moonshotai/kimi-k2-turbo-preview"
+    files:
+      - ".opencode/command/speckit.specify.md"
+      - ".specify/templates/spec-template.md"
+      - "userspec.md"
+      # opencode run --log-level INFO -f userspec.md -f .opencode/command/speckit.specify.md -f .specify/templates/spec-template.md --model moonshotai/kimi-k2-turbo-preview "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
+
+  - command: "-*-verify-*-" # This is a special token to intercept and check for files listed 
+# Run the following and parse the FEATURE_DIR. 
+# .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks 
+# {"FEATURE_DIR":"/home/nanobot/.nanobot/workspace/projects/BlogTest/specs/002-mdblog-generator","AVAILABLE_DOCS":["research.md","data-model.md","contracts/","quickstart.md"]}
+# check for the files, fail and bail if they are not present.
+    model: null
+    files:
+      - "spec.md"
 
   - command: "/speckit.spec-review"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.spec-review.md"
+      - ".specify/templates/spec-review-template.md"
 
   - command: "/compact"
     model: null
 
   - command: "/speckit.plan"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.plan.md"
+      - ".specify/templates/plan-template.md"
+
+  - command: "-*-verify-*-" 
+    model: null
+    files:
+      - "plan.md"
 
   - command: "/speckit.plan-review"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.plan-review.md"
+      - ".specify/templates/plan-review-template.md"
 
   - command: "/compact"
     model: null
 
   - command: "/speckit.tasks"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.tasks.md"
+      - ".specify/templates/tasks-template.md"
+
+  - command: "-*-verify-*-" 
+    model: null
+    files:
+      - "tasks.md"
 
   - command: "/speckit.analyze"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.analyze.md"
 
   - command: "/speckit.tasks-review"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.tasks-review.md"
+      - ".specify/templates/tasks-review-template.md"
 
   - command: "/compact"
     model: null
 
   - command: "/speckit.implement"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.implement.md"
 
+  - command: "-*-verify-*-implementation" # check that stub files are filled in, fail and bail if not.
+    model: null
+    
   - command: "/compact"
     model: null
 
   - command: "/speckit.test-review"
     model: "ollama/qwen3.5:35b"
+    files:
+      - ".opencode/command/speckit.test-review.md"
 
   - command: "/speckit.product-review"
     model: "moonshotai/kimi-k2-turbo-preview"
+    files:
+      - ".opencode/command/speckit.product-review.md"

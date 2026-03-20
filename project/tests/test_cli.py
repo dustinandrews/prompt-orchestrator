@@ -1,4 +1,4 @@
-"""Tests for CLI module."""
+"""Tests for {{project_name}} CLI module."""
 
 import pytest
 
