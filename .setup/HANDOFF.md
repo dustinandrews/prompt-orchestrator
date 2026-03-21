@@ -1,324 +1,65 @@
-# Handoff Document: OpenCode Seq Orchestrator
+# FullAutoTemplate - Technical Handoff
 
-**Date:** 2026-03-18 16:24 PDT  
-**Status:** Working bash script generator complete, v2 orchestrator spec'd but not built
+**Project:** FullAutoTemplate - Reusable template for bootstrapping code generators  
+**Location:** `/home/nanobot/.nanobot/workspace/projects/FullAutoTemplate/`  
+**Last Updated:** 2026-03-20  
+**Status:** ACTIVE - System refactor complete, ready for next test
 
 ---
 
-## Quick Start (What Works Right Now)
+## Quick Reference
 
-### Generate and Run a Workflow
 ```bash
-cd /home/nanobot/.nanobot/workspace/projects/opencode-seq
-python3 yaml-to-cli.py blog-test.yaml > run.sh
-bash run.sh
-```
+# Create new project from template
+python3 .setup/setup.py --project-name myproject --spec "Build a CLI tool that..."
 
-### File Locations
-| File | Purpose |
-|------|---------|
-| `/home/nanobot/.nanobot/workspace/projects/opencode-seq/yaml-to-cli.py` | Working script generator |
-| `/home/nanobot/.nanobot/workspace/projects/opencode-seq/blog-test.yaml` | Example 14-step workflow |
-| `/home/nanobot/.nanobot/workspace/projects/opencode-seq/SPEC.md` | v2 orchestrator specification |
-| `/home/nanobot/.nanobot/workspace/projects/opencode-seq/JOURNEY.md` | History of false paths and pivots |
+# Run workflow
+cd myproject
+python3 ._agents_not_allowed/run_steps.py
 
----
-
-## Critical Technical Details
-
-### OpenCode Version & Bugs
-- **Version:** 1.2.27 (installed at `/home/nanobot/.opencode/bin/opencode`)
-- **Bug #15150:** `/command` endpoint and `--command` flag broken (returns "undefined is not an object")
-- **Workaround:** Use `-f file.md` attachment + natural language prompt instead
-
-### Working OpenCode Pattern
-```bash
-# BROKEN:
-opencode run --command /speckit.specify "prompt"
-
-# WORKING:
-opencode run --log-level INFO \
-  -f .opencode/command/speckit.specify.md \
-  -f .specify/templates/spec-template.md \
-  --model moonshot/kimi-k2-thinking \
-  "Markdown blog generator: ... K.I.S.S. DO NOT ask clarifying questions."
-```
-
-### Session Management
-- **Continue session:** `--continue` flag (use on steps 2-N)
-- **Export session:** `opencode export [sessionID]` (for backup)
-- **Fork session:** `opencode run --fork --continue` (for recovery)
-
----
-
-## Model Strategy (Proven)
-
-| Model | Use For | Cost |
-|-------|---------|------|
-| `moonshot/kimi-k2-thinking` | specify, product-review | Higher |
-| `ollama/qwen3.5:35b` | Everything else | Local/free |
-| `groq/llama-3.3-70b` | Fast bulk work | TBD (fast) |
-
-**Constraint:** Moonshot has token quotas. Use sparingly.
-
----
-
-## Speckit Template Mapping
-
-Templates that exist:
-- `.specify/templates/spec-template.md`
-- `.specify/templates/spec-review-template.md`
-- `.specify/templates/plan-template.md`
-- `.specify/templates/plan-review-template.md`
-- `.specify/templates/tasks-template.md`
-- `.specify/templates/tasks-review-template.md`
-
-Templates that DON'T exist (run without template file):
-- `analyze-template.md`
-- `implement-template.md`
-- `test-review-template.md` (uses final-review-template - outdated)
-- `product-review-template.md` (uses final-review-template - outdated)
-
-**Note:** final-review-template.md exists but is outdated (test/product review were extracted from it).
-
----
-
-## Current YAML Format
-
-```yaml
-format: json
-quiet: true
-log_level: INFO  # DEBUG, INFO, WARN, ERROR
-message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
-commands:
-  - command: "/speckit.specify Markdown blog generator: ..."
-    model: "moonshot/kimi-k2-thinking"
-  - command: "/speckit.spec-review"
-    model: "ollama/qwen3.5:35b"
-  - command: "/compact"
-    model: null
-  # etc...
+# Check logs
+cat ._agents_not_allowed/workflow_*.log
 ```
 
 ---
 
-## Known Issues
+## System Overview
 
-### 1. AI Recommendations Instead of Action
-**Symptom:** Qwen outputs:
-```
-Recommended revision command:
-./speckit.tasks --focus=mvp --max-tasks=15
-```
+**Purpose:** Automate speckit workflow execution without human intervention between steps.
 
-**Impact:** Workflow stalls waiting for human intervention.
+**Architecture:**
+1. **steps.yaml** - Single source of truth for workflow
+2. **run_steps.py** - Executes commands, handles verification, manages retries
+3. **._agents_not_allowed/** - Per-project config and logs (hidden to discourage agent modification)
 
-**Status:** Not fixed. Options:
-- Post-process output, detect "Recommended", auto-retry
-- Stricter prompt: "DO NOT suggest commands. MAKE CHANGES."
-- Build agent that watches output and decides next step
-
-### 2. No Checkpoint/Resume
-**Symptom:** If step 12 fails, must restart from step 1.
-
-**Workaround:** Manual session recovery:
-```bash
-opencode session list
-opencode run --fork --continue --session <id>
-```
-
-**Spec Solution:** See SPEC.md US3 - checkpoint.json after each step.
-
-### 3. Cost Tracking Missing
-**Symptom:** No visibility into running cost.
-
-**Spec Solution:** See SPEC.md US4 - track per-step model usage.
+**Key Principle:** Command runs → Verification checks → Retry if needed → Continue
 
 ---
 
-## Infrastructure Available
+## Workflow Steps (14 Total)
 
-### Local Machine (evo-x2)
-- **CPU:** NucBox EVO X2
-- **Ollama:** Running with qwen3.5:35b, lfm2.5-thinking:latest
-- **OpenCode:** v1.2.27, config at `~/.opencode/`
-- **Projects:** `/home/nanobot/.nanobot/workspace/projects/`
-
-### External Services
-- **Moonshot API:** Working but quota-limited (~300k tokens)
-- **Groq:** Available, fast (800 tokens/sec), not yet tested
-- **SearXNG:** Running on port 8888 (for web search)
-
-### Python Environment
-- **Location:** nanobot venv
-- **Key packages:** yaml, requests, youtube-transcript-api
-- **Path:** `/home/nanobot/nanobot/`
-
----
-
-## What's Built vs Spec'd
-
-### Built (Working)
-- ✅ yaml-to-cli.py - bash script generator
-- ✅ File attachment workaround for --command bug
-- ✅ Template mapping for existing templates
-- ✅ Model routing per command
-- ✅ --continue flag for session persistence
-- ✅ log_level support
-
-### Spec'd (Not Built)
-- ⏳ Recommendation detection & auto-retry
-- ⏳ Checkpoint/resume (checkpoint.json)
-- ⏳ Session export at workflow start
-- ⏳ Cost tracking per step
-- ⏳ Real-time progress with timing
-- ⏳ Agent-based step decider
+| Step | Command | Model | Verification |
+|------|---------|-------|--------------|
+| 1 | /speckit.specify | reviewer-model | spec.md exists |
+| 2 | /speckit.spec-review | coder-model | spec-review.md PASS |
+| 3 | /compact | coder-model | - |
+| 4 | /speckit.plan | coder-model | plan.md exists |
+| 5 | /speckit.plan-review | coder-model | plan-review.md PASS |
+| 6 | /compact | coder-model | - |
+| 7 | /speckit.tasks | coder-model | tasks.md exists |
+| 8 | /speckit.analyze | coder-model | - |
+| 9 | /speckit.tasks-review | coder-model | tasks-review.md PASS |
+| 10 | /compact | coder-model | - |
+| 11 | /speckit.implement | coder-model | No placeholders in src/ |
+| 12 | /compact | coder-model | - |
+| 13 | /speckit.test-review | coder-model | test-review.md PASS |
+| 14 | /speckit.product-review | reviewer-model | product-review.md PASS |
 
 ---
 
-## Test Project
+## YAML Configuration
 
-**Location:** `/home/nanobot/.nanobot/workspace/projects/BlogTest/`
-
-**Status:** In-progress speckit run (may be abandoned/rescued)
-
-**What was being built:** Markdown blog generator
-- Single command: `mdblog build ./posts ./output`
-- Dark theme via CSS
-- Static HTML output
-
----
-
-## Key Assumptions
-
-1. **OpenCode bug #15150 won't be fixed soon** - Workaround is permanent
-2. **Speckit templates won't change** - Hardcoded paths in yaml-to-cli.py
-3. **Ollama/qwen3.5:35b is "good enough"** for bulk work
-4. **Moonshot is for high-value steps only** - cost control critical
-5. **File-based approach is viable** - no need for Redis/DB
-
----
-
-## Next Steps (Pick One)
-
-1. **Fix yaml-to-cli.py** - Add recommendation detection + auto-retry
-2. **Build orchestrator.py** - Full spec from SPEC.md
-3. **Test Groq models** - Replace qwen with groq for speed
-4. **Test lfm2.5-thinking** - See if it's viable for implement step
-5. **Run BlogTest to completion** - Validate end-to-end workflow
-
----
-
-## Emergency Contacts (Metaphorical)
-
-- **OpenCode bugs:** GitHub issues #15150, #9733
-- **Speckit templates:** Check `.specify/templates/` directory
-- **Model quotas:** Moonshot dashboard (if suspended, use Ollama only)
-
----
-
-## Update: FullAutoTemplate (2026-03-19)
-
-**Location:** `/home/nanobot/.nanobot/workspace/projects/FullAutoTemplate/`
-
-**New Workflow:**
-```bash
-cd FullAutoTemplate/.setup
-python3 setup.py --project-name myapp --spec "Build a tool that..."
-cd ../myapp
-bash .run/run.sh
-```
-
-**Key Files:**
-- `.setup/setup.py` - Project generator
-- `.setup/steps.yaml` - Generic workflow template
-- `project/` - Skeleton scaffold (src/, tests/, pyproject.toml)
-- `.specify/memory/constitution.md` - Updated with venv/path rules
-
-**Template Updates:**
-- `test-review-template.md` - Now populated
-- `product-review-template.md` - Created
-- `speckit.implement.md` - References skeleton structure
-
-**Cost Validation:**
-- Qwen (Ollama/local): $0
-- Kimi (landing): $0.60
-- Full cycle: **$0.60** vs **$2.50** Kimi-only
-
-**Active Test Project:**
-- **opencode-runner** at `/home/nanobot/.nanobot/workspace/projects/opencode-runner/`
-- Python-based workflow executor (replacing bash script generation)
-- Being built with Qwen via new template workflow
-
-**Status:** Template system functional. Next: Test opencode-runner completion.
-
---
-
-## Update: FullAutoTemplate
-### Completed test
-- **opencode-runner** at `/home/nanobot/.nanobot/workspace/projects/opencode-runner/`
-- Ran 100% un-attended and ended up with a python file that looks correct but is untested
-- Agents didn't follow the directory pattern
-- May need to adjust the templates -OR- make the working dir the {projectname} dir
-
-### Root Cause Identified (2026-03-19)
-**Template Discovery Failure:** Skeleton in `project/` folder was invisible to agents - opencode ran from root, agents never saw scaffold files. Created their own structure instead.
-
-**Solution Direction:**
-- Option A: Change working directory to `{projectname}/` before opencode execution
-- Option B: Flatten template structure (move skeleton to root)
-- Option C: Explicitly pass skeleton files via `-f` attachments
-
-### YAML-First Refactor (2026-03-19)
-**Simplification:** Beefed up `steps.yaml` with richer metadata, stubbed minimal `run_steps.py` executor.
-
-**Principle:** One source of truth (YAML), dumb executor, no middle logic.
-
-### Next steps
-
-1. **Complete run_steps.py program**
-   - Implement YAML reader
-   - Execute opencode commands via subprocess
-   - ensure --continue flag across steps
-   - implement the validation logic
-   - Add checkpoint/resume capability (later)
-
-2. **Re-examine setup.py program**
-   - It's messy - needs cleanup
-   - Mods to remove extra directory may not work properly
-   - Rip out bash script generation (deprecated by run_steps.py)
-   - Focus: clean project scaffolding only
-
-3. **Validate working directory fix**
-   - Test Option A (cd to project dir before opencode)
-   - Verify agents see skeleton files in context
-
----
-
-## Internal Notes (Not for Publication)
-
-**2026-03-20 - Ant Colony Observation**
-Watching daughter's ant show. Complex systems built from simple rules, local interactions, no central brain. 
-
-FullAutoTemplate parallels:
-- Narrow phase scope = simple ant rules
-- Verify gates = local interaction checks
-- No "smart" orchestrator needed
-- System survives individual agent failures
-
-The insight validates the design. Complex reliable systems from simple constrained parts.
-
----
-
-## Update: Active Test Run (2026-03-20)
-
-**Test Project:** snake (Console Snake Game)
-**Test Spec:** `/home/nanobot/.nanobot/workspace/projects/FullAutoTemplate/.specs/PythonSnakeGame.md`
-**Model:** GPT-OSS-20B (replacing Qwen for speed test)
-
-### Changes Made Today
-
-**1. Model Aliases in YAML**
+### Model Aliases
 ```yaml
 models:
   - reviewer-model:
@@ -326,65 +67,201 @@ models:
   - coder-model:
       model: "ollama/qwen3.5:35b"
 ```
-Commands now reference aliases (`reviewer-model`, `coder-model`) instead of literal strings.
 
-**2. Runner Updates (run_steps.py)**
-- Resolves model aliases to actual model strings at execution
-- Fixed YAML path: defaults to script directory (`.run/steps.yaml`)
-- Fixed verify_files: only checks `specs/{feature-dir}/`, not root
-- Root specs considered wrong - feature directory is canonical
+### Verification Patterns
 
-**3. Setup.py Updates**
-- Copies `run_steps.py` and `steps.yaml` to `.run/` in project
-- Each project has isolated copies for concurrent experiments
-- Instructions updated: `python3 .run/run_steps.py`
+**File existence check (e.g., spec.md):**
+```yaml
+- command: "/speckit.specify"
+  verify:
+    files:
+      - "spec.md"
+    retry_step_on_file_not_found: "/speckit.specify"
+```
 
-**4. Bug Discovered & Fixed**
-Speckit puts specs in `specs/001-feature-name/`, not root. Runner now discovers feature directory dynamically and verifies files there.
+**Review validation (PASS/FAIL parsing):**
+```yaml
+- command: "/speckit.spec-review"
+  verify:
+    files:
+      - "spec-review.md"
+    retry_step_on_fail: "/speckit.spec-review"
+    retry_step_on_file_not_found: "/speckit.spec-review"
+```
 
-**5. Verify Implementation Working**
-The `-*-verify-*-implementation` checkpoint command is functional - successfully detected placeholder content in init.py during test runs.
+**Implementation validation (placeholder scan):**
+```yaml
+- command: "/speckit.implement"
+  verify_implementation: true
+  retry_step_on_fail: "/speckit.implement"
+```
 
-### Test Results: GPT-OSS-20B Failure, System Success
+---
 
-**Status:** COMPLETE - Snake game test ran full 23-step workflow
+## Retry Behavior
 
-**GPT-OSS-20B Performance:**
-- ❌ Failed to implement - output `#Impliment game here.` placeholder
-- ❌ 3 retries with error context did not help
-- ❌ Model is "fast but lazy" - quick responses, no substance
-- ✅ Successfully tested the retry validation system
+### Three Failure Types
 
-**System Validation:**
-- ✅ 23-step workflow executed fully unattended
-- ✅ Verify-implementation detected placeholder content
-- ✅ Automatic retry triggered with review file attachment
-- ✅ Error context passed: "VALIDATION ERROR: Placeholders found..."
-- ✅ Max retries (3) exceeded, clean bailout with traceback
-- ✅ Workflow log captured entire retry sequence
+1. **Command fails** (non-zero exit)
+   - Retry same command
+   - Max 3 attempts
 
-**Verdict:** Retry/validation system works perfectly. GPT-OSS-20B unsuitable for implement step. Qwen remains coder-model of choice.
+2. **File not found** (verification)
+   - Use `retry_step_on_file_not_found`
+   - Usually same command (cheap regeneration)
 
-### What's Working Now
+3. **Review FAILED / Placeholders found**
+   - Use `retry_step_on_fail`
+   - Usually upstream step (expensive rebuild)
 
-**1. Review Validation (NEW)**
-- All review templates output `STATUS: PASS/FAIL`
-- Verify steps parse markers and extract reasons
-- Automatic retry on FAIL with full context
+### Retry Context
+On retry, agent receives:
+```
+VALIDATION ERROR: {reason}
+```
 
-**2. Retry with File Attachment (NEW)**
-- Failed review file attached to retry step
-- Error context injected into prompt
-- Per-validation retry counters
+Plus the review file attached via `-f` flag if applicable.
 
-**3. File Logger (NEW)**
-- `._agents_not_allowed/workflow.log`
-- Shows step order, retries, reasons
-- "retries exceeded." on failure
+---
 
-**4. 23-Step Workflow**
-- Each review followed by verify checkpoint
-- Steps 1-18: Original workflow
-- Steps 19-23: Review validation checkpoints
+## File Structure
 
+```
+FullAutoTemplate/
+├── .setup/
+│   ├── setup.py              # Creates new projects
+│   ├── run_steps.py          # Workflow executor
+│   └── steps.yaml            # Master workflow config
+│
+├── .specify/
+│   ├── templates/            # All speckit templates
+│   │   ├── spec-template.md
+│   │   ├── spec-review-template.md
+│   │   ├── plan-template.md
+│   │   ├── plan-review-template.md
+│   │   ├── tasks-template.md
+│   │   ├── tasks-review-template.md
+│   │   ├── test-review-template.md
+│   │   └── product-review-template.md
+│   └── memory/
+│       └── constitution.md   # 11 principles
+│
+├── .opencode/
+│   └── command/              # Speckit command definitions
+│       ├── speckit.specify.md
+│       ├── speckit.spec-review.md
+│       ├── speckit.plan.md
+│       ├── speckit.plan-review.md
+│       ├── speckit.tasks.md
+│       ├── speckit.analyze.md
+│       ├── speckit.tasks-review.md
+│       ├── speckit.implement.md
+│       ├── speckit.test-review.md
+│       ├── speckit.product-review.md
+│       └── compact.md
+│
+├── project/                  # Skeleton scaffold (copied to new projects)
+│   ├── src/
+│   ├── tests/
+│   ├── pyproject.toml
+│   ├── README.md
+│   └── requirements.txt
+│
+└── .specs/                   # Test specs
+    └── PythonSnakeGame.md
+```
 
+---
+
+## Current Implementation Details
+
+### run_steps.py Key Classes
+
+**WorkflowLogger:**
+- Timestamped log files: `workflow_YYYYMMDD_HHMMSS.log`
+- Tracks step execution, retries, failures
+
+**Command:**
+```python
+class Command:
+    command: str              # The speckit command
+    model: str                # Model alias (reviewer-model, coder-model)
+    files: List[str]          # Files to attach via -f
+    verify: Dict              # File verification config
+    verify_implementation: bool  # Scan src/ for placeholders
+```
+
+**OpenCodeExecutor:**
+- Loads YAML, resolves model aliases
+- Executes commands via `opencode run` subprocess
+- Runs verification after successful commands
+- Handles retry logic with per-step counters
+
+### Verification Functions
+
+**verify_files(files):**
+- Checks file exists in `specs/{feature-dir}/`
+- If `-review.md` file: parses STATUS: PASS/FAIL
+- Returns (success, error_message)
+
+**verify_implementation():**
+- Scans `src/` and `tests/` directories
+- Looks for placeholder patterns: `# TODO`, `# FIXME`, `# Implement`, etc.
+- Returns (success, error_message)
+
+---
+
+## Known Limitations
+
+1. **Model hallucination:** Qwen sometimes outputs "Recommended command:" instead of making changes
+2. **Context limits:** Long specs can fill Qwen context window
+3. **No checkpoint/resume:** Must restart from specific step if interrupted
+4. **Single feature directory:** Finds first subdir in `specs/`, not configurable
+
+---
+
+## Recent Changes (2026-03-20)
+
+### Compacted Verification System
+**Before:** 23 steps (9 separate verification steps)  
+**After:** 14 steps (verification integrated into commands)
+
+**Benefits:**
+- 39% fewer steps
+- File-not-found retries are cheap (same command, not upstream)
+- Cleaner YAML structure
+- No magic `-*-verify-*-` command prefixes
+
+### Timestamped Logs
+- Log files now include timestamp: `workflow_20260320_181132.log`
+- Prevents overwriting previous run logs
+
+### Null Model Error
+- `model: null` now raises `ValueError` (was unpredictable)
+- All steps must specify valid model alias
+
+---
+
+## Next Steps / TODO
+
+1. **Test with Qwen:** Run snake game test to validate compacted system
+2. **Cost tracking:** Add token/cost logging per step
+3. **Session persistence:** Support `--continue` for opencode session reuse
+4. **Recommendation detection:** Auto-retry when Qwen suggests commands instead of executing
+
+---
+
+## Files Modified Today
+
+- `.setup/steps.yaml` - Compacted to 14 steps with inline verification
+- `.setup/run_steps.py` - Updated Command class, verification logic, retry handling
+- `.setup/JOURNEY.md` - Added Phase 11 documentation
+- `.setup/HANDOFF.md` - This file
+
+---
+
+## Contact / Context
+
+**For AI assistants:** Read this file first when picking up this project. Check `._agents_not_allowed/workflow_*.log` for recent activity.
+
+**Key constraint:** Files in `._agents_not_allowed/` are hands-off unless explicitly asked to modify.

@@ -63,6 +63,8 @@ class Command:
         self.command = data.get("command")
         self.model = data.get("model")
         self.files = data.get("files", [])
+        self.verify = data.get("verify")
+        self.verify_implementation = data.get("verify_implementation", False)
         self.retry_step_on_fail = data.get("retry_step_on_fail")
 
 
@@ -99,7 +101,6 @@ class OpenCodeExecutor:
         self.step_n_extra = step_n_extra or []
         self.max_retries_per_validation = 3
         self.retry_counters = {}  # validation_step_index -> retry_count
-        self.review_file_to_attach = None  # Track review file for retry attachment
         
         self._load_yaml()
         self._validate_start_step()
@@ -143,9 +144,7 @@ class OpenCodeExecutor:
     def _resolve_model(self, model_ref: str) -> str:
         """Resolve model alias to actual model string, or return as-is if not found."""
         if model_ref is None:
-            raise ValueError("Model cannot be null. Use 'local' for validation steps that don't need LLM calls.")
-        if model_ref == "local":
-            return "local"
+            raise ValueError("Model cannot be null.")
         return self.models.get(model_ref, model_ref)
     
     def _get_feature_dir(self) -> Path:
@@ -299,7 +298,8 @@ class OpenCodeExecutor:
             
             exit_code = 0
             error_msg = None
-            is_verify = cmd.command.startswith("-*-verify-*-")
+            verify_failure = None
+            verify_error_msg = None
             
             # Determine if we should pass extra context (only for step N when --step specified)
             step_n_context = None
@@ -307,96 +307,106 @@ class OpenCodeExecutor:
                 step_n_context = self.step_n_extra
                 print(f"  [CONTEXT] Adding extra info: {' '.join(self.step_n_extra)}")
             
-            # Reset review file tracker
-            self.review_file_to_attach = None
-            
+            # Execute the main command
             try:
-                if cmd.command.startswith("-*-verify-*-implementation"):
-                    success, error_msg = self.verify_implementation()
-                    if not success:
-                        exit_code = 1
-                elif is_verify:
-                    success, error_msg = self.verify_files(cmd.files)
-                    if not success:
-                        exit_code = 1
-                        # Track which review file failed for attachment
-                        if cmd.files:
-                            for f in cmd.files:
-                                if f.endswith('-review.md'):
-                                    self.review_file_to_attach = f
-                                    break
-                else:
-                    resolved_model = self._resolve_model(cmd.model)
-                    # Build file list including review file if retrying
-                    files_to_attach = cmd.files or []
-                    if self.review_file_to_attach and self.start_step_override:
-                        # Find feature dir and add review file path
-                        feature_dir = self._get_feature_dir()
-                        if feature_dir:
-                            review_path = f"{feature_dir}/{self.review_file_to_attach}"
-                            if review_path not in files_to_attach:
-                                files_to_attach = list(files_to_attach) + [review_path]
-                    
-                    exit_code = self.execute_command(
-                        cmd.command, 
-                        model=resolved_model, 
-                        files=files_to_attach,
-                        extra=step_n_context
-                    )
+                resolved_model = self._resolve_model(cmd.model)
+                exit_code = self.execute_command(
+                    cmd.command, 
+                    model=resolved_model, 
+                    files=cmd.files or [],
+                    extra=step_n_context
+                )
             except Exception as e:
                 exit_code = 1
                 error_msg = str(e)
                 print(f"ERROR: {error_msg}")
             
-            if exit_code != 0:
-                # Check if this is a verify step
-                if is_verify:
-                    # Get or initialize retry counter for this validation step
-                    retry_count = self.retry_counters.get(i, 0)
+            # If command succeeded, run verification if configured
+            if exit_code == 0 and cmd.verify_implementation:
+                success, verify_error_msg = self.verify_implementation()
+                if not success:
+                    verify_failure = "implementation"
+            
+            if exit_code == 0 and cmd.verify:
+                verify_files = cmd.verify.get("files", [])
+                success, verify_error_msg = self.verify_files(verify_files)
+                if not success:
+                    if verify_error_msg and "Missing required files" in verify_error_msg:
+                        verify_failure = "file_not_found"
+                    else:
+                        verify_failure = "review_fail"
+            
+            # Handle verification or command failures
+            if exit_code != 0 or verify_failure:
+                # Get or initialize retry counter for this step
+                retry_count = self.retry_counters.get(i, 0)
+                
+                if retry_count < self.max_retries_per_validation:
+                    retry_count += 1
+                    self.retry_counters[i] = retry_count
                     
-                    if retry_count < self.max_retries_per_validation:
-                        retry_count += 1
-                        self.retry_counters[i] = retry_count
-                        
-                        # Determine retry target based on failure type
-                        if error_msg and "Missing required files" in error_msg:
-                            # File existence failure: go back 1 step
-                            retry_step = i - 1
-                            retry_target_command = self.commands[retry_step - 1].command if retry_step > 0 else "start"
-                            print(f"\n[RETRY] File check failed: {error_msg}")
-                            print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
-                            print(f"[RETRY] Re-running previous step {retry_step}: {retry_target_command}")
+                    # Determine retry target based on failure type
+                    retry_step = None
+                    retry_target_name = None
+                    
+                    if exit_code != 0:
+                        # Command failed - retry this step
+                        retry_step = i
+                        retry_target_name = cmd.command
+                        print(f"\n[RETRY] Command failed: {error_msg}")
+                        print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
+                        print(f"[RETRY] Re-running step {retry_step}: {retry_target_name}")
+                    elif verify_failure == "file_not_found":
+                        # File not found - retry same command to regenerate it
+                        retry_step = i
+                        retry_target_name = cmd.command
+                        if cmd.verify and cmd.verify.get("retry_step_on_file_not_found"):
+                            # Use configured retry step if available
+                            found_step = self.find_retry_step(i, cmd.verify["retry_step_on_file_not_found"])
+                            if found_step:
+                                retry_step = found_step
+                                retry_target_name = cmd.verify["retry_step_on_file_not_found"]
+                        print(f"\n[RETRY] File not found: {verify_error_msg}")
+                        print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
+                        print(f"[RETRY] Re-running step {retry_step}: {retry_target_name}")
+                    elif verify_failure in ("review_fail", "implementation"):
+                        # Review failed or implementation has placeholders - use configured retry
+                        error_to_use = verify_error_msg
+                        if cmd.verify and cmd.verify.get("retry_step_on_fail"):
+                            found_step = self.find_retry_step(i, cmd.verify["retry_step_on_fail"])
+                            if found_step:
+                                retry_step = found_step
+                                retry_target_name = cmd.verify["retry_step_on_fail"]
                         elif cmd.retry_step_on_fail:
-                            # Review failure: use configured retry step
-                            retry_step = self.find_retry_step(i, cmd.retry_step_on_fail)
-                            if retry_step:
-                                print(f"\n[RETRY] Validation failed: {error_msg}")
-                                print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
-                                print(f"[RETRY] Re-running step {retry_step}: {cmd.retry_step_on_fail}")
-                                print(f"[RETRY] With context: {error_msg}")
-                            else:
-                                print(f"\n[RETRY] ERROR: Could not find step '{cmd.retry_step_on_fail}' to retry")
-                                retry_step = None
-                        else:
-                            print(f"\n[RETRY] ERROR: No retry_step_on_fail configured for this validation")
-                            retry_step = None
+                            # Fallback to command-level retry_step_on_fail
+                            found_step = self.find_retry_step(i, cmd.retry_step_on_fail)
+                            if found_step:
+                                retry_step = found_step
+                                retry_target_name = cmd.retry_step_on_fail
                         
                         if retry_step:
-                            # Log the retry
-                            self.logger.log_retry(i, retry_step, error_msg, retry_count, self.max_retries_per_validation)
-                            
-                            # Set up context for retry step
-                            self.step_n_extra = [f"VALIDATION ERROR: {error_msg}"]
-                            self.start_step_override = retry_step
-                            
-                            # Jump back to retry step
-                            i = retry_step
-                            continue
-                    else:
-                        print(f"\n[RETRY] Max retries ({self.max_retries_per_validation}) exceeded for validation step {i}")
-                        self.logger.log_retry_exceeded(i, error_msg)
+                            print(f"\n[RETRY] Validation failed: {error_to_use}")
+                            print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
+                            print(f"[RETRY] Re-running step {retry_step}: {retry_target_name}")
+                            print(f"[RETRY] With context: {error_to_use}")
+                    
+                    if retry_step:
+                        # Log the retry
+                        self.logger.log_retry(i, retry_step, verify_error_msg or error_msg, retry_count, self.max_retries_per_validation)
+                        
+                        # Set up context for retry step
+                        self.step_n_extra = [f"VALIDATION ERROR: {verify_error_msg or error_msg}"]
+                        self.start_step_override = retry_step
+                        
+                        # Jump back to retry step
+                        i = retry_step
+                        continue
                 
-                # If we get here, either no retry configured or max retries exceeded
+                # Max retries exceeded
+                print(f"\n[RETRY] Max retries ({self.max_retries_per_validation}) exceeded for step {i}")
+                self.logger.log_retry_exceeded(i, verify_error_msg or error_msg)
+                
+                # If we get here, max retries exceeded
                 print(f"\n[FAIL] Step {i} failed with no more retries available")
                 print(f"\nFull traceback:")
                 traceback.print_exc()

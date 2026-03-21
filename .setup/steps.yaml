@@ -4,12 +4,9 @@ message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
 max_retries_per_validation: 3
 models:
   - reviewer-model:
-      model: "moonshotai/kimi-k2-turbo-preview"
+      model: "moonshotai/kimi-k2.5"
   - coder-model:
       model: "ollama/qwen3.5:35b"
-  - local:
-      model: "local"
-  
 
 commands:
   - command: "/speckit.specify"
@@ -18,29 +15,21 @@ commands:
       - ".opencode/command/speckit.specify.md"
       - ".specify/templates/spec-template.md"
       - "userspec.md"
-      # opencode run --log-level INFO -f userspec.md -f .opencode/command/speckit.specify.md -f .specify/templates/spec-template.md --model moonshotai/kimi-k2-turbo-preview "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
-
-  - command: "-*-verify-*-" # This is a special token to intercept and check for files listed 
-# Run the following and parse the FEATURE_DIR. 
-# .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks 
-# {"FEATURE_DIR":"/home/nanobot/.nanobot/workspace/projects/BlogTest/specs/002-mdblog-generator","AVAILABLE_DOCS":["research.md","data-model.md","contracts/","quickstart.md"]}
-# check for the files, fail and bail if they are not present.
-    model: local
-    files:
-      - "spec.md"
-    retry_step_on_fail: "/speckit.specify"
+    verify:
+      files:
+        - "spec.md"
+      retry_step_on_file_not_found: "/speckit.specify"
 
   - command: "/speckit.spec-review"
     model: coder-model
     files:
       - ".opencode/command/speckit.spec-review.md"
       - ".specify/templates/spec-review-template.md"
-
-  - command: "-*-verify-*-"
-    model: local
-    files:
-      - "spec-review.md"
-    retry_step_on_fail: "/speckit.spec-review"
+    verify:
+      files:
+        - "spec-review.md"
+      retry_step_on_fail: "/speckit.spec-review"
+      retry_step_on_file_not_found: "/speckit.spec-review"
 
   - command: "/compact"
     model: coder-model
@@ -50,24 +39,21 @@ commands:
     files:
       - ".opencode/command/speckit.plan.md"
       - ".specify/templates/plan-template.md"
-
-  - command: "-*-verify-*-" 
-    model: local
-    files:
-      - "plan.md"
-    retry_step_on_fail: "/speckit.plan"
+    verify:
+      files:
+        - "plan.md"
+      retry_step_on_file_not_found: "/speckit.plan"
 
   - command: "/speckit.plan-review"
     model: coder-model
     files:
       - ".opencode/command/speckit.plan-review.md"
       - ".specify/templates/plan-review-template.md"
-
-  - command: "-*-verify-*-"
-    model: local
-    files:
-      - "plan-review.md"
-    retry_step_on_fail: "/speckit.plan"
+    verify:
+      files:
+        - "plan-review.md"
+      retry_step_on_fail: "/speckit.plan"
+      retry_step_on_file_not_found: "/speckit.plan-review"
 
   - command: "/compact"
     model: coder-model
@@ -77,12 +63,10 @@ commands:
     files:
       - ".opencode/command/speckit.tasks.md"
       - ".specify/templates/tasks-template.md"
-
-  - command: "-*-verify-*-" 
-    model: local
-    files:
-      - "tasks.md"
-    retry_step_on_fail: "/speckit.tasks"
+    verify:
+      files:
+        - "tasks.md"
+      retry_step_on_file_not_found: "/speckit.tasks"
 
   - command: "/speckit.analyze"
     model: coder-model
@@ -94,12 +78,11 @@ commands:
     files:
       - ".opencode/command/speckit.tasks-review.md"
       - ".specify/templates/tasks-review-template.md"
-
-  - command: "-*-verify-*-"
-    model: local
-    files:
-      - "tasks-review.md"
-    retry_step_on_fail: "/speckit.tasks"
+    verify:
+      files:
+        - "tasks-review.md"
+      retry_step_on_fail: "/speckit.tasks"
+      retry_step_on_file_not_found: "/speckit.tasks-review"
 
   - command: "/compact"
     model: coder-model
@@ -108,11 +91,9 @@ commands:
     model: coder-model
     files:
       - ".opencode/command/speckit.implement.md"
-
-  - command: "-*-verify-*-implementation" # check that stub files are filled in, fail and bail if not.
-    model: local
+    verify_implementation: true
     retry_step_on_fail: "/speckit.implement"
-    
+
   - command: "/compact"
     model: coder-model
 
@@ -121,21 +102,19 @@ commands:
     files:
       - ".opencode/command/speckit.test-review.md"
       - ".specify/templates/test-review-template.md"
-
-  - command: "-*-verify-*-"
-    model: local
-    files:
-      - "test-review.md"
-    retry_step_on_fail: "/speckit.implement"
+    verify:
+      files:
+        - "test-review.md"
+      retry_step_on_fail: "/speckit.implement"
+      retry_step_on_file_not_found: "/speckit.test-review"
 
   - command: "/speckit.product-review"
     model: reviewer-model
     files:
       - ".opencode/command/speckit.product-review.md"
       - ".specify/templates/product-review-template.md"
-
-  - command: "-*-verify-*-"
-    model: local
-    files:
-      - "product-review.md"
-    retry_step_on_fail: "/speckit.implement"
+    verify:
+      files:
+        - "product-review.md"
+      retry_step_on_fail: "/speckit.implement"
+      retry_step_on_file_not_found: "/speckit.product-review"

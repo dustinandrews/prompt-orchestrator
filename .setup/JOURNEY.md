@@ -463,3 +463,97 @@ The retry loop design works:
 - No manual intervention needed
 
 ---
+
+## Phase 11: Compacted Verification System (2026-03-20)
+
+**Problem:** 23 steps (9 were just verification). Wasteful rebuilds when review file missing (would retry upstream step instead of just regenerating the file).
+
+**Solution:** Integrate verification into commands that need it
+
+### New YAML Structure
+```yaml
+commands:
+  - command: "/speckit.spec-review"
+    model: coder-model
+    files: [...]
+    verify:
+      files:
+        - "spec-review.md"
+      retry_step_on_fail: "/speckit.spec-review"        # Review FAILED
+      retry_step_on_file_not_found: "/speckit.spec-review"  # File missing
+
+  - command: "/speckit.implement"
+    model: coder-model
+    files: [...]
+    verify_implementation: true
+    retry_step_on_fail: "/speckit.implement"
+```
+
+### Key Changes
+
+1. **Removed separate `-*-verify-*-` steps** - 14 steps instead of 23 (39% reduction)
+
+2. **Two retry paths:**
+   - `retry_step_on_file_not_found` - File doesn't exist (cheap: rerun same command)
+   - `retry_step_on_fail` - Review FAILED or implementation has placeholders (expensive: go back and fix)
+
+3. **Verification runs after command succeeds:**
+   ```
+   Execute command → Verify output → Handle failure → Continue
+   ```
+
+4. **Simpler runner logic:**
+   - No magic command prefixes
+   - `Command` class parses `verify` and `verify_implementation` attributes
+   - Main loop handles all retry logic uniformly
+
+### Efficiency Gains
+
+**Before:**
+- File missing → Verify step fails → Retry upstream step (wasteful rebuild)
+- 23 steps, complex step ordering
+
+**After:**
+- File missing → Retry same command (cheap regeneration)
+- Review FAILED → Retry upstream step (correct behavior)
+- 14 steps, each self-contained
+
+### Runner Changes
+
+**Command class:**
+```python
+class Command:
+    def __init__(self, data: dict):
+        self.command = data.get("command")
+        self.model = data.get("model")
+        self.files = data.get("files", [])
+        self.verify = data.get("verify")                    # New
+        self.verify_implementation = data.get("verify_implementation", False)  # New
+```
+
+**Main loop pattern:**
+```python
+# Execute command
+exit_code = self.execute_command(cmd.command, ...)
+
+# Run verification if configured
+if exit_code == 0 and cmd.verify_implementation:
+    success, error = self.verify_implementation()
+    
+if exit_code == 0 and cmd.verify:
+    success, error = self.verify_files(cmd.verify["files"])
+
+# Handle failures with appropriate retry target
+if file_not_found:
+    retry_step = cmd.verify.get("retry_step_on_file_not_found", i)
+elif review_failed:
+    retry_step = cmd.verify.get("retry_step_on_fail")
+```
+
+### Timestamped Logs
+
+Log files now include timestamp:
+- `workflow_20260320_181132.log` instead of `workflow.log`
+- Prevents overwriting previous runs
+
+---
