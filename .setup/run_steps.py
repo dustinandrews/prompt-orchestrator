@@ -12,7 +12,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 try:
     import yaml
@@ -151,42 +151,15 @@ def get_log_dir(yaml_path: Path) -> Path:
 
 
 def find_feature_dir(base_dir: Path) -> Optional[Path]:
-    """Find feature directory by running check-prerequisites.sh and parsing JSON output."""
-    import json
-    script_path = base_dir / ".specify" / "scripts" / "bash" / "check-prerequisites.sh"
-
-    if not script_path.exists():
-        # Fallback to directory scanning if script not present
-        specs_dir = base_dir / "specs"
-        if not specs_dir.exists():
-            return None
-        for item in specs_dir.iterdir():
-            if item.is_dir():
-                return item
+    """Find first subdirectory in specs/ relative to base directory."""
+    specs_dir = base_dir / "specs"
+    if not specs_dir.exists():
         return None
 
-    try:
-        result = subprocess.run(
-            [str(script_path), "--json", "--require-tasks", "--include-tasks"],
-            capture_output=True,
-            text=True,
-            cwd=base_dir
-        )
-        if result.returncode != 0:
-            return None
-
-        # Parse JSON from last line (in case of preceding output)
-        lines = result.stdout.strip().split('\n')
-        for line in reversed(lines):
-            try:
-                data = json.loads(line)
-                if "FEATURE_DIR" in data:
-                    return Path(data["FEATURE_DIR"])
-            except json.JSONDecodeError:
-                continue
-        return None
-    except Exception:
-        return None
+    for item in specs_dir.iterdir():
+        if item.is_dir():
+            return item
+    return None
 
 
 # ============================================================================
@@ -219,53 +192,66 @@ def check_review_status(content: str) -> VerificationResult:
     )
 
 
-def verify_file_exists(feature_dir: Path, file_path: str) -> VerificationResult:
-    """Check if single file exists in feature directory."""
-    full_path = feature_dir / file_path
-    if not full_path.exists():
-        return VerificationResult(
-            success=False,
-            error_type="file_not_found",
-            message=f"Missing: {feature_dir}/{file_path}"
-        )
-
-    if file_path.endswith('-review.md'):
-        try:
-            content = full_path.read_text()
-            result = check_review_status(content)
-            if not result.success:
-                return VerificationResult(
-                    success=False,
-                    error_type="review_fail",
-                    message=f"{file_path}: {result.message}"
-                )
-        except Exception as e:
-            return VerificationResult(
-                success=False,
-                error_type="review_fail",
-                message=f"{file_path}: Error reading - {e}"
-            )
-
-    return VerificationResult(success=True)
-
-
 def verify_files(feature_dir: Optional[Path], files: tuple) -> VerificationResult:
     """Verify all required files exist and pass review checks."""
+    print(f"\n======= VERIFYING =======")
+
     if not files:
+        print("No files to verify")
+        print("======= PASS =======\n")
         return VerificationResult(success=True)
 
     if not feature_dir:
+        print(f"Feature directory: NOT FOUND")
+        print("======= FAIL =======\n")
         return VerificationResult(
             success=False,
             error_type="file_not_found",
             message="No feature directory found in specs/"
         )
 
-    for file_path in files:
-        result = verify_file_exists(feature_dir, file_path)
-        if not result.success:
-            return result
+    print(f"Feature directory: {feature_dir}")
+    print(f"Files to verify: {list(files)}")
+    print()
 
+    for file_path in files:
+        full_path = feature_dir / file_path
+        exists = full_path.exists()
+        status = "FOUND" if exists else "NOT FOUND"
+        print(f"  {file_path}: {status}")
+
+        if not exists:
+            print(f"\n======= FAIL =======\n")
+            return VerificationResult(
+                success=False,
+                error_type="file_not_found",
+                message=f"Missing: {feature_dir}/{file_path}"
+            )
+
+        if file_path.endswith('-review.md'):
+            try:
+                content = full_path.read_text()
+                review_result = check_review_status(content)
+                review_status = "PASS" if review_result.success else "FAIL"
+                print(f"    Review status: {review_status}")
+
+                if not review_result.success:
+                    print(f"\n======= FAIL =======\n")
+                    return VerificationResult(
+                        success=False,
+                        error_type="review_fail",
+                        message=f"{file_path}: {review_result.message}"
+                    )
+            except Exception as e:
+                print(f"    Review status: ERROR - {e}")
+                print(f"\n======= FAIL =======\n")
+                return VerificationResult(
+                    success=False,
+                    error_type="review_fail",
+                    message=f"{file_path}: Error reading - {e}"
+                )
+
+    print(f"\n======= PASS =======\n")
     return VerificationResult(success=True)
 
 
@@ -293,27 +279,41 @@ def scan_directory_for_placeholders(dir_path: Path) -> list:
 
 def verify_implementation(base_dir: Path) -> VerificationResult:
     """Check implementation directories for placeholders."""
+    print(f"\n======= VERIFYING IMPLEMENTATION =======")
+
     impl_dirs = ["src", "tests"]
     all_placeholders = []
 
     for dir_name in impl_dirs:
         dir_path = base_dir / dir_name
-        if not dir_path.exists():
+        exists = dir_path.exists()
+        status = "FOUND" if exists else "NOT FOUND"
+        print(f"  Directory {dir_name}/: {status}")
+
+        if not exists:
+            print(f"\n======= FAIL =======\n")
             return VerificationResult(
                 success=False,
                 error_type="implementation",
                 message=f"Directory missing: {dir_name}"
             )
+
         placeholders = scan_directory_for_placeholders(dir_path)
+        if placeholders:
+            print(f"    Placeholders found in:")
+            for p in placeholders:
+                print(f"      - {p}")
         all_placeholders.extend(placeholders)
 
     if all_placeholders:
+        print(f"\n======= FAIL =======\n")
         return VerificationResult(
             success=False,
             error_type="implementation",
             message=f"Placeholders found in: {', '.join(all_placeholders)}"
         )
 
+    print(f"\n======= PASS =======\n")
     return VerificationResult(success=True)
 
 
@@ -547,8 +547,10 @@ def run_workflow(
             verify_result = verify_implementation(project_root)
 
         if exec_result.exit_code == 0 and cmd.verify and verify_result.success:
+            # Re-check feature dir in case it was just created
+            current_feature_dir = find_feature_dir(project_root)
             files_to_check = tuple(cmd.verify.get("files", []))
-            verify_result = verify_files(feature_dir, files_to_check)
+            verify_result = verify_files(current_feature_dir, files_to_check)
 
         # Compute retry decision
         context = StepContext(
@@ -651,4 +653,10 @@ Examples:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"FATAL ERROR: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
