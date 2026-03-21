@@ -28,7 +28,7 @@ commands:
     verify:
       files:
         - "spec-review.md"
-      retry_step_on_fail: "/speckit.spec-review"
+      retry_step_on_fail: "/speckit.specify"
       retry_step_on_file_not_found: "/speckit.spec-review"
 
   - command: "/compact"

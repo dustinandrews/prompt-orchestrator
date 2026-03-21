@@ -63,7 +63,7 @@ cat ._agents_not_allowed/workflow_*.log
 ```yaml
 models:
   - reviewer-model:
-      model: "moonshotai/kimi-k2-turbo-preview"
+      model: "moonshotai/kimi-k2.5"
   - coder-model:
       model: "ollama/qwen3.5:35b"
 ```
