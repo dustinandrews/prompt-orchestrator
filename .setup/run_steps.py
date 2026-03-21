@@ -151,15 +151,42 @@ def get_log_dir(yaml_path: Path) -> Path:
 
 
 def find_feature_dir(base_dir: Path) -> Optional[Path]:
-    """Find first subdirectory in specs/ relative to base directory."""
-    specs_dir = base_dir / "specs"
-    if not specs_dir.exists():
+    """Find feature directory by running check-prerequisites.sh and parsing JSON output."""
+    import json
+    script_path = base_dir / ".specify" / "scripts" / "bash" / "check-prerequisites.sh"
+
+    if not script_path.exists():
+        # Fallback to directory scanning if script not present
+        specs_dir = base_dir / "specs"
+        if not specs_dir.exists():
+            return None
+        for item in specs_dir.iterdir():
+            if item.is_dir():
+                return item
         return None
 
-    for item in specs_dir.iterdir():
-        if item.is_dir():
-            return item
-    return None
+    try:
+        result = subprocess.run(
+            [str(script_path), "--json", "--require-tasks", "--include-tasks"],
+            capture_output=True,
+            text=True,
+            cwd=base_dir
+        )
+        if result.returncode != 0:
+            return None
+
+        # Parse JSON from last line (in case of preceding output)
+        lines = result.stdout.strip().split('\n')
+        for line in reversed(lines):
+            try:
+                data = json.loads(line)
+                if "FEATURE_DIR" in data:
+                    return Path(data["FEATURE_DIR"])
+            except json.JSONDecodeError:
+                continue
+        return None
+    except Exception:
+        return None
 
 
 # ============================================================================
@@ -473,11 +500,6 @@ def run_workflow(
 
     project_root = log_file.parent.parent  # Go up from ._agents_not_allowed/
     feature_dir = find_feature_dir(project_root)
-
-    print(f"DEBUG: log_file.parent = {log_file.parent}")
-    print(f"DEBUG: project_root = {project_root}")
-    print(f"DEBUG: feature_dir = {feature_dir}")
-    print(f"DEBUG: specs exists = {(project_root / 'specs').exists()}")
 
     print(f"Loaded {len(config.commands)} commands for: {config.project_name}")
     print(f"Defined models: {list(config.models.keys())}")
