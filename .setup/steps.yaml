@@ -6,8 +6,9 @@ models:
   - reviewer-model:
       model: "moonshotai/kimi-k2-turbo-preview"
   - coder-model:
-      model: "groq/openai/gpt-oss-20b"
-      #"ollama/qwen3.5:35b"
+      model: "ollama/qwen3.5:35b"
+  - local:
+      model: "local"
   
 
 commands:
@@ -24,7 +25,7 @@ commands:
 # .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks 
 # {"FEATURE_DIR":"/home/nanobot/.nanobot/workspace/projects/BlogTest/specs/002-mdblog-generator","AVAILABLE_DOCS":["research.md","data-model.md","contracts/","quickstart.md"]}
 # check for the files, fail and bail if they are not present.
-    model: null
+    model: local
     files:
       - "spec.md"
     retry_step_on_fail: "/speckit.specify"
@@ -36,7 +37,7 @@ commands:
       - ".specify/templates/spec-review-template.md"
 
   - command: "-*-verify-*-"
-    model: null
+    model: local
     files:
       - "spec-review.md"
     retry_step_on_fail: "/speckit.spec-review"
@@ -51,7 +52,7 @@ commands:
       - ".specify/templates/plan-template.md"
 
   - command: "-*-verify-*-" 
-    model: null
+    model: local
     files:
       - "plan.md"
     retry_step_on_fail: "/speckit.plan"
@@ -63,7 +64,7 @@ commands:
       - ".specify/templates/plan-review-template.md"
 
   - command: "-*-verify-*-"
-    model: null
+    model: local
     files:
       - "plan-review.md"
     retry_step_on_fail: "/speckit.plan"
@@ -78,7 +79,7 @@ commands:
       - ".specify/templates/tasks-template.md"
 
   - command: "-*-verify-*-" 
-    model: null
+    model: local
     files:
       - "tasks.md"
     retry_step_on_fail: "/speckit.tasks"
@@ -95,7 +96,7 @@ commands:
       - ".specify/templates/tasks-review-template.md"
 
   - command: "-*-verify-*-"
-    model: null
+    model: local
     files:
       - "tasks-review.md"
     retry_step_on_fail: "/speckit.tasks"
@@ -109,7 +110,7 @@ commands:
       - ".opencode/command/speckit.implement.md"
 
   - command: "-*-verify-*-implementation" # check that stub files are filled in, fail and bail if not.
-    model: null
+    model: local
     retry_step_on_fail: "/speckit.implement"
     
   - command: "/compact"
@@ -122,7 +123,7 @@ commands:
       - ".specify/templates/test-review-template.md"
 
   - command: "-*-verify-*-"
-    model: null
+    model: local
     files:
       - "test-review.md"
     retry_step_on_fail: "/speckit.implement"
@@ -134,7 +135,7 @@ commands:
       - ".specify/templates/product-review-template.md"
 
   - command: "-*-verify-*-"
-    model: null
+    model: local
     files:
       - "product-review.md"
     retry_step_on_fail: "/speckit.implement"

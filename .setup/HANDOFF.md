@@ -345,14 +345,46 @@ Speckit puts specs in `specs/001-feature-name/`, not root. Runner now discovers 
 **5. Verify Implementation Working**
 The `-*-verify-*-implementation` checkpoint command is functional - successfully detected placeholder content in init.py during test runs.
 
-### Current Status
-- Step 1 complete: Feature created (`001-console-snake-game`)
-- Step 2 in progress: Verify spec.md exists in feature dir
-- 18 total steps in workflow
+### Test Results: GPT-OSS-20B Failure, System Success
 
-### Next Session Notes
-- Test is running - check snake project status
-- GPT-OSS-20B vs Qwen comparison pending
-- If successful, validates full pipeline end-to-end
+**Status:** COMPLETE - Snake game test ran full 23-step workflow
+
+**GPT-OSS-20B Performance:**
+- ❌ Failed to implement - output `#Impliment game here.` placeholder
+- ❌ 3 retries with error context did not help
+- ❌ Model is "fast but lazy" - quick responses, no substance
+- ✅ Successfully tested the retry validation system
+
+**System Validation:**
+- ✅ 23-step workflow executed fully unattended
+- ✅ Verify-implementation detected placeholder content
+- ✅ Automatic retry triggered with review file attachment
+- ✅ Error context passed: "VALIDATION ERROR: Placeholders found..."
+- ✅ Max retries (3) exceeded, clean bailout with traceback
+- ✅ Workflow log captured entire retry sequence
+
+**Verdict:** Retry/validation system works perfectly. GPT-OSS-20B unsuitable for implement step. Qwen remains coder-model of choice.
+
+### What's Working Now
+
+**1. Review Validation (NEW)**
+- All review templates output `STATUS: PASS/FAIL`
+- Verify steps parse markers and extract reasons
+- Automatic retry on FAIL with full context
+
+**2. Retry with File Attachment (NEW)**
+- Failed review file attached to retry step
+- Error context injected into prompt
+- Per-validation retry counters
+
+**3. File Logger (NEW)**
+- `._agents_not_allowed/workflow.log`
+- Shows step order, retries, reasons
+- "retries exceeded." on failure
+
+**4. 23-Step Workflow**
+- Each review followed by verify checkpoint
+- Steps 1-18: Original workflow
+- Steps 19-23: Review validation checkpoints
 
 

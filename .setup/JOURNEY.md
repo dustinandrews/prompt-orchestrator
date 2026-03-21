@@ -365,4 +365,101 @@ Pre-structure beats post-fix. Skeleton prevents whole categories of errors.
 
 **Goal:** One source of truth (YAML), dumb executor (Python), no logic in between.
 
---
+---
+
+## Phase 10: Review Validation & Retry System (2026-03-20)
+
+**Problem:** Reviews could FAIL but workflow would continue. No automated retry mechanism.
+
+**Solution Built:**
+
+### 1. Standardized Review Templates
+All review templates now include PASS/FAIL marker:
+```markdown
+## Review Result
+STATUS: [PASS | FAIL]
+
+If FAIL: [one sentence reason]
+```
+
+Templates updated:
+- `spec-review-template.md` ✅
+- `plan-review-template.md` ✅
+- `tasks-review-template.md` ✅
+- `test-review-template.md` (new) ✅
+- `product-review-template.md` (new) ✅
+
+### 2. Enhanced Validation Steps
+Added `-*-verify-*-` checkpoints after every review:
+- Check review file exists
+- Parse STATUS: PASS/FAIL marker
+- Extract failure reason
+- Trigger retry if FAIL
+
+### 3. Retry Logic with Context
+```yaml
+max_retries_per_validation: 3
+
+commands:
+  - command: "-*-verify-*-"
+    files:
+      - "test-review.md"
+    retry_step_on_fail: "/speckit.implement"
+```
+
+**Behavior:**
+1. Verify step reads review file
+2. If STATUS: FAIL → find retry_step_on_fail target
+3. Re-run target step with:
+   - Error context: "VALIDATION ERROR: {reason}"
+   - Review file attached via `-f` flag
+4. Track retry count per validation step
+5. Max retries exceeded → bail with full traceback
+
+### 4. File Logger
+`workflow.log` in `._agents_not_allowed/` tracks:
+```
+1. /speckit.specify
+...
+15. -*-*-verify-*-
+RETRY: Step 15 failed, retrying from step 14
+REASON: Placeholders found in src/snake.py
+ATTEMPT: 1/3
+14. /speckit.implement
+...
+```
+
+### 5. GPT-OSS-20B Test Results
+
+**Test:** Snake game with GPT-OSS-20B (replacing Qwen for speed)
+
+**Result:** System worked perfectly, model failed spectacularly
+
+**What Worked:**
+- ✅ 23-step workflow executed unattended
+- ✅ Verify-implementation detected placeholder: `#Impliment game here.`
+- ✅ Retry triggered automatically
+- ✅ Review file attached to retry context
+- ✅ Max retries exceeded, clean bail
+
+**What Failed:**
+- ❌ GPT-OSS-20B output placeholders instead of code
+- ❌ Even with 3 retries + error context, kept outputting stubs
+- ❌ "Fast but lazy" - 30+ min saved vs Qwen, but useless output
+
+**Verdict:** GPT-OSS-20B unsuitable for implement step. Retry system validated.
+
+### Architecture Validated
+
+The retry loop design works:
+1. Validation detects failure
+2. Retry with context
+3. Either fixes or exhausts retries
+4. Clear logging of entire flow
+
+**23 steps now** (was 18):
+- Each review followed by verify
+- Each verify can retry upstream step
+- No manual intervention needed
+
+---

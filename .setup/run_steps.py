@@ -24,7 +24,8 @@ class WorkflowLogger:
     """Simple file logger for workflow execution."""
     
     def __init__(self, log_dir: Path):
-        self.log_file = log_dir / "workflow.log"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.log_file = log_dir / f"workflow_{timestamp}.log"
         self._write("=" * 60)
         self._write(f"Workflow started at {datetime.now().isoformat()}")
         self._write("=" * 60)
@@ -142,7 +143,9 @@ class OpenCodeExecutor:
     def _resolve_model(self, model_ref: str) -> str:
         """Resolve model alias to actual model string, or return as-is if not found."""
         if model_ref is None:
-            return None
+            raise ValueError("Model cannot be null. Use 'local' for validation steps that don't need LLM calls.")
+        if model_ref == "local":
+            return "local"
         return self.models.get(model_ref, model_ref)
     
     def _get_feature_dir(self) -> Path:
@@ -346,24 +349,39 @@ class OpenCodeExecutor:
                 print(f"ERROR: {error_msg}")
             
             if exit_code != 0:
-                # Check if this is a verify step with retry configured
-                if is_verify and cmd.retry_step_on_fail:
+                # Check if this is a verify step
+                if is_verify:
                     # Get or initialize retry counter for this validation step
                     retry_count = self.retry_counters.get(i, 0)
                     
                     if retry_count < self.max_retries_per_validation:
-                        # Find the step to retry
-                        retry_step = self.find_retry_step(i, cmd.retry_step_on_fail)
+                        retry_count += 1
+                        self.retry_counters[i] = retry_count
+                        
+                        # Determine retry target based on failure type
+                        if error_msg and "Missing required files" in error_msg:
+                            # File existence failure: go back 1 step
+                            retry_step = i - 1
+                            retry_target_command = self.commands[retry_step - 1].command if retry_step > 0 else "start"
+                            print(f"\n[RETRY] File check failed: {error_msg}")
+                            print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
+                            print(f"[RETRY] Re-running previous step {retry_step}: {retry_target_command}")
+                        elif cmd.retry_step_on_fail:
+                            # Review failure: use configured retry step
+                            retry_step = self.find_retry_step(i, cmd.retry_step_on_fail)
+                            if retry_step:
+                                print(f"\n[RETRY] Validation failed: {error_msg}")
+                                print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
+                                print(f"[RETRY] Re-running step {retry_step}: {cmd.retry_step_on_fail}")
+                                print(f"[RETRY] With context: {error_msg}")
+                            else:
+                                print(f"\n[RETRY] ERROR: Could not find step '{cmd.retry_step_on_fail}' to retry")
+                                retry_step = None
+                        else:
+                            print(f"\n[RETRY] ERROR: No retry_step_on_fail configured for this validation")
+                            retry_step = None
                         
                         if retry_step:
-                            retry_count += 1
-                            self.retry_counters[i] = retry_count
-                            
-                            print(f"\n[RETRY] Validation failed: {error_msg}")
-                            print(f"[RETRY] Attempt {retry_count}/{self.max_retries_per_validation}")
-                            print(f"[RETRY] Re-running step {retry_step}: {cmd.retry_step_on_fail}")
-                            print(f"[RETRY] With context: {error_msg}")
-                            
                             # Log the retry
                             self.logger.log_retry(i, retry_step, error_msg, retry_count, self.max_retries_per_validation)
                             
@@ -374,8 +392,6 @@ class OpenCodeExecutor:
                             # Jump back to retry step
                             i = retry_step
                             continue
-                        else:
-                            print(f"\n[RETRY] ERROR: Could not find step '{cmd.retry_step_on_fail}' to retry")
                     else:
                         print(f"\n[RETRY] Max retries ({self.max_retries_per_validation}) exceeded for validation step {i}")
                         self.logger.log_retry_exceeded(i, error_msg)
