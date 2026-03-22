@@ -30,3 +30,4 @@ Thumbs.db
 # Project-specific
 ._agents_not_allowed/*.log
 ._agents_not_allowed/steps.yaml
+.setup/workflow_*
