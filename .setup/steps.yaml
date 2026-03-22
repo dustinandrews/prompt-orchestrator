@@ -5,10 +5,11 @@ message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
 max_retries_per_validation: 3
 models:
   - reviewer-model:
-      model: "openrouter/deepseek/deepseek-v3.2" 
+      model: "ollama/qwen3.5:35b" 
       #"moonshotai/kimi-k2.5"
-  - coder-model:
-      model: "openrouter/deepseek/deepseek-v3.2" 
+  - coder-model: 
+      model: "ollama/qwen3.5:35b"
+      # "openrouter/deepseek/deepseek-v3.2" Good coding model, but relatively expensive.
       #"openrouter/openai/gpt-5.4-mini"  may need setting temperature. Over ambitious, may not follow instructions well.
       #"openrouter/qwen/qwen3-coder-flash" fast but gets confused
       #"ollama/qwen3.5:35b" slow but good, punches above its weight.

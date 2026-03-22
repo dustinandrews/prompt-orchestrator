@@ -1,0 +1,19 @@
+============================================================
+Workflow started at 2026-03-22T12:38:52.258340
+============================================================
+1. /speckit.specify
+RETRY: Step 1 failed, retrying from step 1
+REASON: Command failed
+ATTEMPT: 1/3
+1. /speckit.specify
+RETRY: Step 1 failed, retrying from step 1
+REASON: Command failed
+ATTEMPT: 2/3
+1. /speckit.specify
+RETRY: Step 1 failed, retrying from step 1
+REASON: Command failed
+ATTEMPT: 3/3
+1. /speckit.specify
+RETRIES EXCEEDED at step 1
+REASON: None
+WORKFLOW FAILED

@@ -27,8 +27,17 @@ Each step verified before proceeding. Review files protected by hash-based tampe
 git clone https://github.com/dustinandrews/speckit-orchestrator.git
 cd speckit-orchestrator
 
-# Install dependencies
-pip install pyyaml
+# Install
+
+## optionally install in isolated venv
+python3 -m venv venv
+source venv/bin/activate
+
+# install with dependancies
+pip install -e .
+
+# usage
+python3 .setup/setup.py 
 
 # Configure AI provider (see [opencode docs](https://opencode.ai/docs/))
 

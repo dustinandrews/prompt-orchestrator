@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Setup script for FullAutoTemplate projects.
+Setup script for speckit-orchestrator projects.
 
 Creates a new project from the template and prepares skeleton.
 
 Usage:
-    python3 setup.py --project-name myproject --spec-path ./my-spec.md
+    python3 .setup/setup.py --project-name myproject --spec-path ./my-spec.md
 """
 
 import argparse
@@ -21,10 +21,18 @@ def slugify(name: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
 
 
+def get_template_dir() -> Path:
+    """Get template directory (parent of .setup/)."""
+    return Path(__file__).parent.resolve().parent
+
+def get_setup_dir() -> Path:
+    """Get .setup directory."""
+    return Path(__file__).parent.resolve()
+
 def copy_template(template_dir: Path, target_dir: Path) -> None:
     """Copy template files excluding .setup and project directories."""
     for item in template_dir.iterdir():
-        if item.name in ('.setup', 'project', '__pycache__'):
+        if item.name in ('.setup', 'project', '__pycache__', '.git'):
             continue
         
         dest = target_dir / item.name
@@ -36,7 +44,7 @@ def copy_template(template_dir: Path, target_dir: Path) -> None:
 
 def copy_skeleton(project_dir: Path, project_slug: str) -> None:
     """Copy skeleton files from project/ folder into project root."""
-    skeleton_src = Path(__file__).parent.parent / "project"
+    skeleton_src = get_template_dir() / "project"
     if not skeleton_src.exists():
         print(f"Warning: Skeleton directory not found: {skeleton_src}", file=sys.stderr)
         return
@@ -77,7 +85,7 @@ def copy_runner_files(setup_dir: Path, project_dir: Path) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Setup a new FullAutoTemplate project"
+        description="Setup a new speckit-orchestrator project"
     )
     parser.add_argument(
         "--project-name",
@@ -91,8 +99,8 @@ def main():
     )
     args = parser.parse_args()
     
-    setup_dir = Path(__file__).parent.resolve()
-    template_dir = setup_dir.parent
+    setup_dir = get_setup_dir()
+    template_dir = get_template_dir()
     workspace_dir = template_dir.parent
     
     project_slug = slugify(args.project_name)
@@ -113,6 +121,10 @@ def main():
     copy_spec_file(project_dir, args.spec_path)
     
     copy_runner_files(setup_dir, project_dir)
+    
+    # Initialize git repo for new project
+    subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
+    print(f"Initialized git repo: {project_dir}")
     
     setup_dir_str = str(setup_dir)
     print(f"\nProject '{args.project_name}' created successfully!")

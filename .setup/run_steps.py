@@ -132,17 +132,14 @@ def load_config(yaml_path: Path) -> Config:
 # ============================================================================
 
 def resolve_yaml_path(yaml_path: Optional[str] = None) -> Path:
-    """Determine YAML file location based on defaults."""
-    if yaml_path:
-        return Path(yaml_path)
-
-    cwd = Path.cwd()
-    hidden_config = cwd / "._agents_not_allowed" / "steps.yaml"
-
-    if hidden_config.exists():
-        return hidden_config
-
-    return Path(__file__).parent.resolve() / "steps.yaml"
+    """Determine YAML file location. Requires explicit path."""
+    if not yaml_path:
+        raise ValueError(
+            "steps.yaml path required. "
+            "Run from project directory or specify path: "
+            "python3 ._agents_not_allowed/run_steps.py --config ./_agents_not_allowed/steps.yaml"
+        )
+    return Path(yaml_path)
 
 
 def get_log_dir(yaml_path: Path) -> Path:
@@ -679,9 +676,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_steps.py                      # Start from step 1
-  python run_steps.py --step 5             # Start at step 5
-  python run_steps.py -s 5 "error in line 42"  # Step 5 with context, then normal
+  python run_steps.py --config ./_agents_not_allowed/steps.yaml
+  python run_steps.py --config ./_agents_not_allowed/steps.yaml --step 5
+  python run_steps.py --config ./_agents_not_allowed/steps.yaml -s 5 "error context"
         """
     )
     parser.add_argument(
@@ -692,6 +689,13 @@ Examples:
         help="Start at step N (1-indexed, default: 1)"
     )
     parser.add_argument(
+        "-c", "--config",
+        type=str,
+        default=None,
+        metavar="PATH",
+        help="Path to steps.yaml (required)"
+    )
+    parser.add_argument(
         "extra",
         nargs="*",
         help="Additional context for step N only (e.g., error message)"
@@ -699,7 +703,7 @@ Examples:
 
     args = parser.parse_args()
 
-    yaml_path = resolve_yaml_path()
+    yaml_path = resolve_yaml_path(args.config)
     config = load_config(yaml_path)
     validate_start_step(args.step, len(config.commands))
 
