@@ -1,5 +1,6 @@
+description: "This is a definition of the steps for the speckit process. It is proccessed by a script. **DO NOT** attempt to execute this manually."
 title: "{project_name}"
-log_level: DEBUG #"DEBUG", "INFO", "WARN", "ERROR"
+debug: true # true/false (enables --debug flag)
 message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
 max_retries_per_validation: 3
 models:
@@ -7,8 +8,10 @@ models:
       model: "openrouter/deepseek/deepseek-v3.2" 
       #"moonshotai/kimi-k2.5"
   - coder-model:
-      model: "qwen/qwen3-coder-flash"
-      #"ollama/qwen3.5:35b"
+      model: "openrouter/deepseek/deepseek-v3.2" 
+      #"openrouter/openai/gpt-5.4-mini"  may need setting temperature. Over ambitious, may not follow instructions well.
+      #"openrouter/qwen/qwen3-coder-flash" fast but gets confused
+      #"ollama/qwen3.5:35b" slow but good, punches above its weight.
 
 commands:
   - command: "/speckit.specify"
@@ -23,7 +26,7 @@ commands:
       retry_step_on_file_not_found: "/speckit.specify"
 
   - command: "/speckit.spec-review"
-    model: coder-model
+    model: reviewer-model
     files:
       - ".opencode/command/speckit.spec-review.md"
       - ".specify/templates/spec-review-template.md"
@@ -44,7 +47,7 @@ commands:
       retry_step_on_file_not_found: "/speckit.plan"
 
   - command: "/speckit.plan-review"
-    model: coder-model
+    model: reviewer-model
     files:
       - ".opencode/command/speckit.plan-review.md"
       - ".specify/templates/plan-review-template.md"
@@ -70,7 +73,7 @@ commands:
       - ".opencode/command/speckit.analyze.md"
 
   - command: "/speckit.tasks-review"
-    model: coder-model
+    model: reviewer-model
     files:
       - ".opencode/command/speckit.tasks-review.md"
       - ".specify/templates/tasks-review-template.md"
@@ -88,7 +91,7 @@ commands:
     retry_step_on_fail: "/speckit.implement"
 
   - command: "/speckit.test-review"
-    model: coder-model
+    model: reviewer-model
     files:
       - ".opencode/command/speckit.test-review.md"
       - ".specify/templates/test-review-template.md"

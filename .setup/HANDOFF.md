@@ -228,6 +228,7 @@ Files to verify: ['spec.md']
 2. **Context limits:** Long specs can fill Qwen context window
 3. **No checkpoint/resume:** Must restart from specific step if interrupted - feature recorded for later.
 4. **Single feature workflow:** One feature directory per workflow run
+5. **No verbose/debug flag:** Current OpenCode CLI does not support --debug or --log-level flags.
 
 ---
 
@@ -249,6 +250,17 @@ Files to verify: ['spec.md']
 - Now selects highest numbered directory (for multi-feature projects)
 - Ignores non-numbered directories
 - Re-checks after each command (for newly created specs)
+
+---
+
+## Recent Changes (2026-03-22)
+
+### Removed Non-existent CLI Flags
+- `--debug` and `--log-level` flags removed from `run_steps.py`. Not valid in current OpenCode CLI.
+
+### Review File Tamper Detection
+- Added MD5 hash tracking for review files
+- Fails workflow if review file modified by downstream step
 
 ---
 

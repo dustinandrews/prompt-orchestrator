@@ -246,3 +246,55 @@ Files to verify: ['spec.md']
 2. **Cost tracking:** Token/cost per step logging
 3. **Multi-feature support:** Queue multiple feature directories
 4. **Parallel/Queue execution:** Run independent features concurrently or in a queue. Queue for local agents that might slow each other down with parallel runs.
+
+---
+
+## Phase 13: Tamper Detection + Template Cleanup (2026-03-22)
+
+### Bug: Review File Tampering
+
+**Problem:** Model modified plan-review.md (changed FAIL to PASS) during /speckit.tasks step.
+
+**Evidence:**
+```
+Step 5/10 - /speckit.tasks
+M specs/001-snake-game/plan-review.md
+```
+
+**Root Cause:** Review file modified by downstream step after verification passed.
+
+### Fix Applied: Hash-based Tamper Detection
+
+Added to `run_steps.py`:
+- Track MD5 hash of each review file at verification time
+- Before each step, compare current hash to stored hash
+- Fail with integrity violation if file changed
+
+```python
+# Store hash after verification
+state['verified_review_hashes'][step_num] = {filename: hash}
+
+# Check before next step
+if current_hash != stored_hash:
+    print("[ERROR] Review file modified by downstream step!")
+    sys.exit(1)
+```
+
+### Fix Applied: Template Cleanup
+
+Removed confusing `**Status**: [PASS | FAIL]` placeholders from review templates. Only `STATUS: [PASS | FAIL]` at the end remains as actual output field.
+
+### Other Fixes Applied
+
+1. **--continue logic:** Fixed hardcoded flag. Now only omitted on first step.
+2. **--debug flag:** Removed. Not valid in current OpenCode CLI. User confirmed via docs.
+
+### Current Test Run (Snake Game)
+
+Retry mechanism working - model received FAIL context and is regenerating plan:
+```
+[CONTEXT] Adding extra info: VALIDATION ERROR: plan-review.md: FAIL - Review marked as FAIL
+Executing: /speckit.plan
+```
+
+**Status:** In progress, monitoring for tamper detection.

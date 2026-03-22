@@ -40,7 +40,7 @@ class Command:
 class Config:
     """Immutable workflow configuration."""
     project_name: str
-    log_level: str
+    debug: bool
     message: str
     max_retries: int
     models: dict
@@ -119,7 +119,7 @@ def load_config(yaml_path: Path) -> Config:
 
     return Config(
         project_name=data.get("title", "Unnamed Project"),
-        log_level=data.get("log_level", "INFO"),
+        debug=bool(data.get("debug", False)),
         message=data.get("message", ""),
         max_retries=data.get("max_retries_per_validation", 3),
         models=parse_models(data.get("models", [])),
@@ -205,8 +205,11 @@ def check_review_status(content: str) -> VerificationResult:
     )
 
 
-def verify_files(feature_dir: Optional[Path], files: tuple) -> VerificationResult:
+def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict = None) -> VerificationResult:
     """Verify all required files exist and pass review checks."""
+    if review_hashes is None:
+        review_hashes = {}
+
     print(f"\n======= VERIFYING =======")
 
     if not files:
@@ -248,6 +251,9 @@ def verify_files(feature_dir: Optional[Path], files: tuple) -> VerificationResul
                 review_status = "PASS" if review_result.success else "FAIL"
                 print(f"    Review status: {review_status}")
 
+                # Track hash for tamper detection
+                review_hashes[file_path] = compute_file_hash(full_path)
+
                 if not review_result.success:
                     print(f"\n======= FAIL =======\n")
                     return VerificationResult(
@@ -271,6 +277,12 @@ def verify_files(feature_dir: Optional[Path], files: tuple) -> VerificationResul
 def has_placeholders(content: str) -> bool:
     """Check if content contains placeholder markers."""
     return '{{' in content and '}}' in content
+
+
+def compute_file_hash(file_path: Path) -> str:
+    """Compute MD5 hash of file content."""
+    import hashlib
+    return hashlib.md5(file_path.read_bytes()).hexdigest()
 
 
 def scan_directory_for_placeholders(dir_path: Path) -> list:
@@ -460,12 +472,16 @@ def build_opencode_cmd(
     command: str,
     model: Optional[str],
     files: tuple,
-    log_level: str,
+    debug: bool,
     base_message: str,
-    extra: tuple
+    extra: tuple,
+    use_continue: bool = True
 ) -> list:
     """Construct opencode command list."""
-    cmd = ["opencode", "run", "--continue", "--log-level", log_level]
+    cmd = ["opencode", "run"]
+    if use_continue:
+        cmd.append("--continue")
+    cmd.extend(["--log-level", "DEBUG"])
 
     for file_path in files:
         cmd.extend(["-f", file_path])
@@ -473,9 +489,8 @@ def build_opencode_cmd(
     if model:
         cmd.extend(["--model", model])
 
-    full_message = command
     if base_message:
-        full_message = f"{command} {base_message}"
+        full_message = f"{base_message}"
     if extra:
         full_message = f"{full_message} {' '.join(extra)}"
     cmd.append(full_message)
@@ -508,7 +523,8 @@ def run_workflow(
         'current_step': start_step,
         'retry_counters': {},
         'start_step_override': start_step if start_step > 1 else None,
-        'step_n_extra': tuple(step_n_extra) if step_n_extra else ()
+        'step_n_extra': tuple(step_n_extra) if step_n_extra else (),
+        'verified_review_hashes': {}  # step_num -> {filename: hash}
     }
 
     project_root = log_file.parent.parent  # Go up from ._agents_not_allowed/
@@ -543,8 +559,17 @@ def run_workflow(
         if model is None and cmd.model_alias is not None:
             raise ValueError(f"Model cannot be null for command: {cmd.name}")
 
+        # Determine if this is the first command (no --continue needed)
+        is_first = (
+            state['current_step'] == 1 and
+            state['start_step_override'] is None and
+            not extra
+        )
+        use_continue = not is_first
+
         opencode_cmd = build_opencode_cmd(
-            cmd.name, model, cmd.files, config.log_level, config.message, extra
+            cmd.name, model, cmd.files, config.debug, config.message, extra,
+            use_continue=use_continue
         )
 
         print(f"Executing: {cmd.name}")
@@ -564,7 +589,27 @@ def run_workflow(
             # Re-check feature dir in case it was just created
             current_feature_dir = find_feature_dir(project_root)
             files_to_check = tuple(cmd.verify.get("files", []))
-            verify_result = verify_files(current_feature_dir, files_to_check)
+            step_review_hashes = {}
+            verify_result = verify_files(current_feature_dir, files_to_check, step_review_hashes)
+
+            # Save hashes for tamper detection
+            if step_review_hashes:
+                state['verified_review_hashes'][step_num] = step_review_hashes
+
+        # Check for review file tampering before proceeding
+        for prev_step, prev_hashes in state['verified_review_hashes'].items():
+            for filename, old_hash in prev_hashes.items():
+                review_path = current_feature_dir / filename if current_feature_dir else None
+                if review_path and review_path.exists():
+                    current_hash = compute_file_hash(review_path)
+                    if current_hash != old_hash:
+                        print(f"\n[ERROR] Review file modified by downstream step!")
+                        print(f"  File: {filename}")
+                        print(f"  Verified at step: {prev_step}")
+                        print(f"  Current step: {step_num}")
+                        print(f"  This is a workflow integrity violation.")
+                        log_failure(log_file, step_num, f"Review file tampered: {filename}")
+                        sys.exit(1)
 
         # Compute retry decision
         context = StepContext(

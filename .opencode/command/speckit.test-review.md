@@ -1,92 +1,24 @@
 ---
-description: Phase 1 final review - all tests must pass
-handoffs:
-  - label: Fix Tests
-    agent: speckit.implement
-    prompt: Fix all failing and skipped tests
-    send: true
-  - label: Validate Product
-    agent: speckit.product-review
-    prompt: All tests passing - validate golden path
-    send: true
-scripts:
-  sh: scripts/bash/run-tests.sh
-  ps: scripts/powershell/run-tests.ps1
+description: Run tests and review. One step of many. Do this step and stop.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.test-review.
 ---
 
-# /speckit.test-review
+## COMMAND: TEST REVIEW
 
-## User Input
-```
-$ARGUMENTS
-```
+Fill out `.specify/templates/test-review-template.md` and write to `specs/XXX-feature/test-review.md`.
 
-## Purpose
-Gate to product validation. Zero tolerance for failing or skipped tests. All tests MUST pass before proceeding to product review.
+**Requires**: `specs/XXX-feature/tasks.md` and `specs/XXX-feature/tasks-review.md` with `STATUS: PASS`.
 
-## Execution Flow
+**Workflow**:
+1. Verify tasks-review.md shows PASS
+2. Run all tests: `./.specify/scripts/bash/run-tests.sh`
+3. Verify 100% pass, zero skipped, adequate coverage
+4. Fill template → `specs/XXX-feature/test-review.md`
+5. STOP — do not write any other files
 
-1. **Identify Feature**
-   - Parse $ARGUMENTS for feature name/number
-   - Target: `specs/XXX-feature/`
+## Rules
 
-2. **Run All Tests**
-   - Execute: `./scripts/bash/run-tests.sh` or equivalent
-   - Capture: Total, Passed, Failed, Skipped
-   - Save full test output to `specs/XXX-feature/test-results.log`
-
-3. **Verify Coverage**
-   - Unit tests: Core logic paths covered?
-   - Integration tests: Component interactions tested?
-   - Acceptance tests: P1 criteria verified?
-   - No `@skip`, `@pending`, or TODO tests allowed
-
-4. **Determine Verdict**
-   - **PASS**: 100% tests passing, zero skipped, adequate coverage
-   - **FAIL**: Any failing or skipped tests blocks progress
-
-5. **Generate Output**
-   
-   Create `specs/XXX-feature/test-review.md`:
-   ```markdown
-   # Test Review: [FEATURE NAME]
-   
-   **Date**: [DATE]
-   **Status**: [PASS | FAIL]
-   
-   ## Test Results
-   - **Total**: [N] tests
-   - **Passed**: [N] ([P]%)
-   - **Failed**: [N]
-   - **Skipped**: [N]
-   
-   ## Failed Tests (BLOCKING)
-   | Test | Location | Error | Fix Required |
-   |------|----------|-------|--------------|
-   | [Name] | [File:Line] | [Error] | [Specific fix] |
-   
-   ## Skipped Tests (BLOCKING)
-   | Test | Reason | Action |
-   |------|--------|--------|
-   | [Name] | [Why skipped] | [Implement or remove] |
-   
-   ## Coverage Analysis
-   - Core logic: [%] ([status: OK/INSUFFICIENT])
-   - Integration: [%] ([status: OK/INSUFFICIENT])
-   - P1 paths: [Y/N]
-   
-   ## Decision
-   **Product Review Allowed**: [YES | NO]
-   **If NO**: Fix all failing/skipped tests, re-run `/speckit.test-review`
-   ```
-
-6. **Report & Handoff**
-   - If **FAIL**: Display failure count, handoff to `speckit.implement` to fix
-   - If **PASS**: Display "All tests passing", handoff to `speckit.product-review`
-
-## Rules (ZERO TOLERANCE)
-- **100% PASS RATE**: Any failing test = FAIL
-- **ZERO SKIP**: No skipped, pending, or TODO tests allowed
-- **NO EXCUSES**: "It's just an edge case" = fix it
-- **COVERAGE MINIMUM**: Core logic must have test coverage
-- **BLOCKING**: Cannot proceed to product-review until PASS
+- **STOP** after test-review.md written
+- **100% PASS RATE**: any failing test = FAIL
+- **ZERO SKIP**: no skipped/pending tests allowed
+- **ERROR** if prereqs missing or FAIL → stop
