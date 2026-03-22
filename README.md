@@ -49,6 +49,20 @@ python3 ._agents_not_allowed/run_steps.py
 
 Edit `.setup/steps.yaml` to configure models and retry behavior. Configure your AI provider in opencode (see [opencode providers docs](https://opencode.ai/docs/providers)).
 
+## Advanced Usage
+
+**Resume after interruption:**
+```bash
+python3 ._agents_not_allowed/run_steps.py --step 5
+```
+Resume from step 5. Useful after Ctrl-C or network failure.
+
+**Interact with project in opencode:**
+```bash
+opencode --continue
+```
+Continue the session to manually work on the project.
+
 ## Included Constitution
 
 This repo includes an opinionated constitution (`.specify/memory/constitution.md`) focused on building Python CLI programs:
@@ -60,6 +74,8 @@ This repo includes an opinionated constitution (`.specify/memory/constitution.md
 The workflow enforces these principles via review gates. Plans flagged for over-engineering. Tasks flagged for wrong distribution.
 
 See `.specify/memory/constitution.md` for full rules.
+
+Caveat Emptor if you modify it. 
 
 ## Architecture
 
@@ -77,6 +93,7 @@ See `.specify/memory/constitution.md` for full rules.
 .opencode/
 └── command/         # speckit command definitions
 
+# have your AI agent read docs/*.md to understand project.
 docs/                # Development history and documentation
 ├── JOURNEY.md       # Project history
 ├── HANDOFF.md       # Technical handoff
