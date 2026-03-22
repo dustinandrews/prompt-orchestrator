@@ -1,0 +1,114 @@
+description: "This is a definition of the steps for the speckit process. It is proccessed by a script. **DO NOT** attempt to execute this manually."
+title: "{project_name}"
+debug: true # true/false (enables --debug flag)
+message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
+max_retries_per_validation: 3
+models:
+  - reviewer-model:
+      model: "ollama/qwen3.5:35b" 
+      #"moonshotai/kimi-k2.5"
+  - coder-model: 
+      model: "ollama/qwen3.5:35b"
+      # "openrouter/deepseek/deepseek-v3.2" Good coding model, but relatively expensive.
+      #"openrouter/openai/gpt-5.4-mini"  may need setting temperature. Over ambitious, may not follow instructions well.
+      #"openrouter/qwen/qwen3-coder-flash" fast but gets confused
+      #"ollama/qwen3.5:35b" slow but good, punches above its weight.
+
+commands:
+  - command: "/speckit.specify"
+    model: reviewer-model
+    files:
+      - ".opencode/command/speckit.specify.md"
+      - ".specify/templates/spec-template.md"
+      - "userspec.md"
+    verify:
+      files:
+        - "spec.md"
+      retry_step_on_file_not_found: "/speckit.specify"
+
+  - command: "/speckit.spec-review"
+    model: reviewer-model
+    files:
+      - ".opencode/command/speckit.spec-review.md"
+      - ".specify/templates/spec-review-template.md"
+    verify:
+      files:
+        - "spec-review.md"
+      retry_step_on_fail: "/speckit.specify"
+      retry_step_on_file_not_found: "/speckit.spec-review"
+
+  - command: "/speckit.plan"
+    model: coder-model
+    files:
+      - ".opencode/command/speckit.plan.md"
+      - ".specify/templates/plan-template.md"
+    verify:
+      files:
+        - "plan.md"
+      retry_step_on_file_not_found: "/speckit.plan"
+
+  - command: "/speckit.plan-review"
+    model: reviewer-model
+    files:
+      - ".opencode/command/speckit.plan-review.md"
+      - ".specify/templates/plan-review-template.md"
+    verify:
+      files:
+        - "plan-review.md"
+      retry_step_on_fail: "/speckit.plan"
+      retry_step_on_file_not_found: "/speckit.plan-review"
+
+  - command: "/speckit.tasks"
+    model: coder-model
+    files:
+      - ".opencode/command/speckit.tasks.md"
+      - ".specify/templates/tasks-template.md"
+    verify:
+      files:
+        - "tasks.md"
+      retry_step_on_file_not_found: "/speckit.tasks"
+
+  - command: "/speckit.analyze"
+    model: coder-model
+    files:
+      - ".opencode/command/speckit.analyze.md"
+
+  - command: "/speckit.tasks-review"
+    model: reviewer-model
+    files:
+      - ".opencode/command/speckit.tasks-review.md"
+      - ".specify/templates/tasks-review-template.md"
+    verify:
+      files:
+        - "tasks-review.md"
+      retry_step_on_fail: "/speckit.tasks"
+      retry_step_on_file_not_found: "/speckit.tasks-review"
+
+  - command: "/speckit.implement"
+    model: coder-model
+    files:
+      - ".opencode/command/speckit.implement.md"
+    verify_implementation: true
+    retry_step_on_fail: "/speckit.implement"
+
+  - command: "/speckit.test-review"
+    model: reviewer-model
+    files:
+      - ".opencode/command/speckit.test-review.md"
+      - ".specify/templates/test-review-template.md"
+    verify:
+      files:
+        - "test-review.md"
+      retry_step_on_fail: "/speckit.implement"
+      retry_step_on_file_not_found: "/speckit.test-review"
+
+  - command: "/speckit.product-review"
+    model: reviewer-model
+    files:
+      - ".opencode/command/speckit.product-review.md"
+      - ".specify/templates/product-review-template.md"
+    verify:
+      files:
+        - "product-review.md"
+      retry_step_on_fail: "/speckit.implement"
+      retry_step_on_file_not_found: "/speckit.product-review"

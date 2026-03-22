@@ -94,25 +94,20 @@ Caveat Emptor if you modify it.
 ## Architecture
 
 ```
-.setup/
+.setup/              # Runner scripts (not copied to projects)
 ├── run_steps.py     # Workflow executor
-├── steps.yaml       # Step definitions
-├── setup.py         # Project bootstrapper
-└── ...
+└── setup.py         # Project bootstrapper
 
-.specify/
-├── templates/       # Review templates
-└── memory/          # Constitution and rules
+template/            # Template files (copied to each new project)
+├── .specify/
+│   ├── templates/   # Review templates
+│   └── memory/      # Constitution and rules
+├── .opencode/
+│   └── command/     # speckit command definitions
+├── project/         # Skeleton scaffold
+└── steps.yaml       # Workflow definition
 
-.opencode/
-└── command/         # speckit command definitions
-
-docs/                # Development history and documentation
-
-._agents_not_allowed/   # Runtime files (logs, per-project steps.yaml)
-    # Hidden to prevent AI agents from reading YAML and self-executing
-    # Template copies here during project setup
-```
+docs/                # Development history (not copied)
 ├── JOURNEY.md       # Project history
 ├── HANDOFF.md       # Technical handoff
 └── ...

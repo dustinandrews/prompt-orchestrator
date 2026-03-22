@@ -23,17 +23,17 @@ def slugify(name: str) -> str:
 
 
 def get_template_dir() -> Path:
-    """Get template directory (parent of .setup/)."""
-    return Path(__file__).parent.resolve().parent
+    """Get template directory."""
+    return Path(__file__).parent.resolve().parent / "template"
 
 def get_setup_dir() -> Path:
     """Get .setup directory."""
     return Path(__file__).parent.resolve()
 
-def copy_template(template_dir: Path, target_dir: Path) -> None:
-    """Copy template files excluding .setup and project directories."""
+def copy_template_files(template_dir: Path, target_dir: Path) -> None:
+    """Copy template files to new project."""
     for item in template_dir.iterdir():
-        if item.name in ('.setup', 'project', '__pycache__', '.git'):
+        if item.name in ('__pycache__', '.git'):
             continue
         
         dest = target_dir / item.name
@@ -41,23 +41,6 @@ def copy_template(template_dir: Path, target_dir: Path) -> None:
             shutil.copytree(item, dest, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
         else:
             shutil.copy2(item, dest)
-
-
-def copy_skeleton(project_dir: Path, project_slug: str) -> None:
-    """Copy skeleton files from project/ folder into project root."""
-    skeleton_src = get_template_dir() / "project"
-    if not skeleton_src.exists():
-        print(f"Warning: Skeleton directory not found: {skeleton_src}", file=sys.stderr)
-        return
-    
-    for item in skeleton_src.iterdir():
-        dest = project_dir / item.name
-        if item.is_dir():
-            shutil.copytree(item, dest, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-        else:
-            shutil.copy2(item, dest)
-    
-    print(f"Copied skeleton to: {project_dir}")
 
 
 def copy_spec_file(project_dir: Path, spec_path: str) -> None:
@@ -70,18 +53,6 @@ def copy_spec_file(project_dir: Path, spec_path: str) -> None:
     dest = project_dir / "userspec.md"
     shutil.copy2(src, dest)
     print(f"Copied spec: {dest}")
-
-
-def copy_runner_files(setup_dir: Path, project_dir: Path) -> None:
-    """Copy steps.yaml to hidden directory - runner stays central in .setup/."""
-    config_dir = project_dir / "._agents_not_allowed"
-    config_dir.mkdir(exist_ok=True)
-    
-    yaml_src = setup_dir / "steps.yaml"
-    
-    if yaml_src.exists():
-        shutil.copy2(yaml_src, config_dir / "steps.yaml")
-        print(f"Copied workflow to: {config_dir}/steps.yaml")
 
 
 def main():
@@ -102,7 +73,7 @@ def main():
     
     setup_dir = get_setup_dir()
     template_dir = get_template_dir()
-    workspace_dir = template_dir.parent
+    workspace_dir = setup_dir.parent
     
     project_slug = slugify(args.project_name)
     project_dir = workspace_dir / project_slug
@@ -114,14 +85,10 @@ def main():
     project_dir.mkdir(parents=True)
     print(f"Creating project: {project_dir}")
     
-    copy_template(template_dir, project_dir)
+    copy_template_files(template_dir, project_dir)
     print(f"Copied template files")
     
-    copy_skeleton(project_dir, project_slug)
-    
     copy_spec_file(project_dir, args.spec_path)
-    
-    copy_runner_files(setup_dir, project_dir)
     
     # Initialize git repo for new project
     subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
