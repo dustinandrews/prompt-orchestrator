@@ -82,7 +82,7 @@ Tools like Goose and Claude Code can build toy projects autonomously. But real a
 
 Until someone demonstrates real applications built end-to-end with local Ollama models, the gap between "running locally" and "working locally" remains.
 
-FullAutoTemplate bridges that gap with process discipline.
+This project bridges that gap with process discipline.
 
 ## The Goal
 
@@ -94,4 +94,4 @@ A software system that is:
 The bootstrap isn't the point. The bootstrap builds the system that builds the future systems—each layer battle-tested before the next layer trusts it.
 
 
-FullAutoTemplate is the guardrails.
+This is the guardrails.
