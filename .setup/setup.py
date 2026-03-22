@@ -43,6 +43,25 @@ def copy_template_files(template_dir: Path, target_dir: Path) -> None:
             shutil.copy2(item, dest)
 
 
+def copy_steps_yaml(project_dir: Path) -> None:
+    """Copy steps.yaml and run_steps.py to ._agents_not_allowed/ for execution."""
+    config_dir = project_dir / "._agents_not_allowed"
+    config_dir.mkdir(exist_ok=True)
+    
+    # Copy steps.yaml
+    yaml_src = project_dir / "steps.yaml"
+    if yaml_src.exists():
+        shutil.copy2(yaml_src, config_dir / "steps.yaml")
+        print(f"Copied workflow config to: {config_dir}/steps.yaml")
+    
+    # Copy run_steps.py
+    setup_dir = get_setup_dir()
+    runner_src = setup_dir / "run_steps.py"
+    if runner_src.exists():
+        shutil.copy2(runner_src, config_dir / "run_steps.py")
+        print(f"Copied runner to: {config_dir}/run_steps.py")
+
+
 def copy_spec_file(project_dir: Path, spec_path: str) -> None:
     """Copy user spec file into project as userspec.md."""
     src = Path(spec_path)
@@ -88,6 +107,8 @@ def main():
     copy_template_files(template_dir, project_dir)
     print(f"Copied template files")
     
+    copy_steps_yaml(project_dir)
+    
     copy_spec_file(project_dir, args.spec_path)
     
     # Initialize git repo for new project
@@ -98,7 +119,7 @@ def main():
     print(f"\nProject '{args.project_name}' created successfully!")
     print(f"Next steps:")
     print(f"  cd {project_dir}")
-    print(f"  python3 {setup_dir_str}/run_steps.py")
+    print(f"  python3 ./._agents_not_allowed/run_steps.py --config ./._agents_not_allowed/steps.yaml")
 
 
 if __name__ == "__main__":
