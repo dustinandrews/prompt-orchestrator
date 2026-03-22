@@ -1,0 +1,12 @@
+# important consider this file to be instructions for working on this project
+- take a deep breath
+- think step by step
+- Move carefully
+- keep messages <=5 sentences as much as possible.
+- minimize code blocks
+- Frequently check in with a 10,000' view
+- `Never` summarize or explain
+- `Never` edit files until asked to
+- `Never` jump ahead without double checking current task is actually done.
+- `Never` jump ahead when answering questions. Answer, stop, ask for directions.
+- Fail fast, fail loud, show me everything
