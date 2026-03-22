@@ -1,366 +1,37 @@
-# Journey: Building the OpenCode Seq Orchestrator
+# Journey: Building FullAutoTemplate
 
 *A chronological record of false paths, pivots, and working solutions.*
 
-**Date:** 2026-03-18  
-**Goal:** Automate speckit workflow execution via OpenCode CLI  
-**Outcome:** Working bash script generator with file-attachment workaround
-
----
-## Phase 0: Fine tuning Spec Kit process
-**Spec Kit problems**
-- Out of the box, models tend to over-engineer with spec kit. 
-- Without human intervention they end up with an unruly mess by the end.
-- Even without human review, person still has to feed in the commands as each on finishes
-
-**Fixing the process**
-- After several human assisted runs, patterns emerged
-- Between steps the AI needs to review the last step and aggressively trim the fat
-- Built new /speckit steps to review each step.
-```
-/speckit.specify
-/speckit.spec-review
-/speckit.plan
-/speckit.plan-review
-/speckit.tasks
-/speckit.analyze
-/speckit.tasks-review
-/speckit.implement
-/speckit.test-review
-/speckit.product-review
-```
-  - Test review ensures all tests are working
-  - Product review ensures golden path functions
-
-With a working process in hand all we had to do was automate opencode to just run them in order. Should be easy, right?
-
-## Phase 1: The Dream (HTTP API Automation)
-
-**Initial Approach:** Build a Python orchestrator that talks to OpenCode's HTTP API
-
-Created `runner.py` that:
-- Creates sessions via `POST /session`
-- Sends commands via `POST /session/{id}/command`
-
-**False Path #1: Direct HTTP API**
-- Discovered OpenCode bug #15150: `/command` endpoint returns `undefined is not an object (evaluating 'command3.agent')`
-- Bug affects versions 1.2.14-1.2.27 (confirmed unfixed)
-
-**Pivot #1:** Route through `/message` endpoint instead
-- Changed payload structure to use `parts: [{type: "text", text: "/speckit.specify ..."}]`
-- Returns empty response (fire-and-forget, no LLM output)
-
-**False Path #2: /tui/execute-command**
-- Tried `/tui/execute-command` endpoint
-- Returns boolean `true`, not the LLM response
-- Also fire-and-forget
+**Date:** 2026-03-21  
+**Goal:** Automate speckit workflow execution with guardrails  
+**Outcome:** Functional Python orchestrator with verification and retry logic
 
 ---
 
-## Phase 2: The CLI Discovery
+## Historical Summary (Phases 0-8)
 
-**Pivot #2:** Abandon HTTP API entirely, use `opencode run` CLI
+See `.archive/JOURNEY.2026-03-20.md` for detailed accounts of:
 
-Discovered working pattern:
-```bash
-opencode run -f .opencode/command/speckit.specify.md \
-             -f .specify/templates/spec-template.md \
-             --model moonshot/kimi-k2-thinking \
-             "Markdown blog generator: ..."
-```
+- **Phase 0-1:** Spec kit refinement, HTTP API attempts (OpenCode bug #15150)
+- **Phase 2-3:** CLI discovery, YAML-to-CLI bash generator
+- **Phase 4:** Model routing strategy (Kimi for spec/review, Qwen for bulk)
+- **Phase 5-6:** Recommendation problem, session recovery patterns
+- **Phase 7:** FullAutoTemplate creation (skeleton scaffold + setup script)
+- **Phase 8:** Template discovery failure (directory context matters)
 
-**Key Insight:** The `-f` (file attachment) flag works around the `--command` bug by attaching speckit prompt files as context, then passing the actual prompt as natural language.
-
-**Why this works:**
-- OpenCode reads the attached `.md` files
-- The command file contains the speckit instructions
-- The template file contains the output format
-- Natural language prompt provides the specific task
-
----
-
-## Phase 3: YAML-to-CLI Generator
-
-**Created:** `yaml-to-cli.py` - converts workflow YAML to bash script
-
-**Features added:**
-1. Template mapping (speckit command → template file)
-2. Model routing per command
-3. `--continue` flag for session persistence
-4. Step numbering with echo statements
-5. Log level support
-
-**False Path #3: Missing Templates**
-- Tried to attach `analyze-template.md` - doesn't exist
-- Tried to attach `implement-template.md` - doesn't exist
-- Tried to use `final-review-template.md` for test/product review - outdated
-
-**Fix:** Only map templates that exist; run other commands with just the command file.
-
----
-
-## Phase 4: Model Routing Strategy
-
-**Decision:** Use different models for different phases
-
-| Phase | Model | Reason |
-|-------|-------|--------|
-| specify | moonshot/kimi | High-quality specification writing |
-| spec-review | ollama/qwen3.5:35b | Cheap bulk analysis |
-| plan | ollama/qwen3.5:35b | Cheap bulk generation |
-| plan-review | ollama/qwen3.5:35b | Cheap bulk analysis |
-| tasks | ollama/qwen3.5:35b | Cheap bulk generation |
-| analyze | ollama/qwen3.5:35b | Cheap bulk analysis |
-| tasks-review | ollama/qwen3.5:35b | Cheap bulk analysis |
-| implement | ollama/qwen3.5:35b | Cheap bulk coding |
-| test-review | ollama/qwen3.5:35b | Cheap validation |
-| product-review | moonshot/kimi | High-quality final review |
-
-**Cost Control:** Moonshot only for high-value steps (specification and final review).
-
----
-
-## Phase 5: The Recommendation Problem
-
-**Issue:** Qwen sometimes outputs:
-```
-Recommended revision command:
-./speckit.tasks --focus=mvp --max-tasks=15
-```
-
-Instead of making the changes directly.
-
-**Impact:** Workflow stalls waiting for human intervention.
-
-**Potential Solutions (Not Yet Implemented):**
-1. Post-process output to detect recommendations, auto-retry with "MAKE THE CHANGES"
-2. Use stricter prompt: "DO NOT suggest commands. DO NOT ask questions. MAKE CHANGES."
-3. Build agent that watches output and decides next step
-
-**Current Workaround:** Manual intervention when detected.
-
----
-
-## Phase 6: Session Recovery
-
-**Issue:** Test run failed at step 13/14 due to missing `--continue` flag in old script.
-
-**Recovery Process:**
-1. Load session: `opencode session list`
-2. Fork session: `opencode run --fork --continue`
-3. Re-run recommended command
-
-**Lesson:** Checkpoint/resume is critical for long workflows (14 steps × 2-5 min = 30-70 min total).
-
-**Spec Addition:** Orchestrator should export session data at start and support `--resume` flag.
-
----
-
-## Current Working System
-
-**Input:** `blog-test.yaml`
-```yaml
-format: json
-quiet: true
-log_level: INFO
-message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
-commands:
-  - command: "/speckit.specify Markdown blog generator: ..."
-    model: "moonshot/kimi-k2-thinking"
-  - command: "/speckit.spec-review"
-    model: "ollama/qwen3.5:35b"
-  # ... 12 more steps
-```
-
-**Generation:**
-```bash
-python3 yaml-to-cli.py blog-test.yaml > run.sh
-```
-
-**Output Excerpt:**
-```bash
-echo "Step 1/14 - speckit.specify.md"
-opencode run --log-level INFO \
-  -f .opencode/command/speckit.specify.md \
-  -f .specify/templates/spec-template.md \
-  --model moonshot/kimi-k2-thinking \
-  "Markdown blog generator: ... K.I.S.S. DO NOT ask clarifying questions."
-```
-
-**Execution:**
-```bash
-bash run.sh
-```
-
----
-
-## Key Architectural Decisions
-
-### 1. File Attachment Over Commands
-- **Why:** `--command` flag broken in OpenCode
-- **How:** Attach prompt files, pass task as natural language
-- **Trade-off:** More verbose commands, but reliable
-
-### 2. Bash Generation Over Direct Execution
-- **Why:** User can review/edit before running
-- **How:** Generate run.sh, user runs manually
-- **Trade-off:** Less "magic", more transparent
-
-### 3. Template Mapping
-- **Why:** Not all speckit commands have templates
-- **How:** Dictionary lookup, skip if missing
-- **Trade-off:** Some commands run with less context
-
-### 4. Model Per Command
-- **Why:** Cost optimization
-- **How:** YAML specifies model per step
-- **Trade-off:** More complex config, but cheaper runs
-
----
-
-## What's Next (Spec V2)
-
-1. **Recommendation Detection:** Auto-retry when AI suggests commands
-2. **Checkpoint/Resume:** Save progress after each step
-3. **Session Export:** Backup at workflow start
-4. **Cost Tracking:** Running token/cost estimate
-5. **Progress Visibility:** Real-time step timing
-
----
-
-## Lessons Learned
-
-1. **Bugs happen:** OpenCode is new (1.2.27), has 5000+ open issues
-2. **Workarounds work:** File attachment bypasses broken `--command`
-3. **Cost matters:** Routing cheap models to bulk work saves 10x
-4. **Rescue is hard:** Restarting clean often beats debugging partial runs
-5. **Meta is the point:** We built automation for building automation
-
----
-
-## Tools That Work
-
-- `opencode run -f cmd.md -f template.md --model X "prompt"` ✅
-- `python3 yaml-to-cli.py blog-test.yaml` ✅
-- `bash run.sh` ✅
-- Session recovery via fork/continue ✅
-
-## Tools That Don't Work
-
-- `opencode run --command /speckit.specify` ❌ (bug #15150)
-- HTTP API `/session/{id}/command` ❌ (same bug)
-- `/tui/execute-command` ❌ (fire-and-forget, no output)
-
----
-
-## Phase 7: FullAutoTemplate (2026-03-19)
-
-**Goal:** Create reusable template for new projects with skeleton structure
-
-**Problem Solved:** Qwen was creating malformed project structures, installing to global Python, using /tmp
-
-**Solution:** Pre-defined skeleton + setup script
-
-### Created Structure
-
-**FullAutoTemplate/**:
-```
-.specify/templates/     # All review templates
-.opencode/command/      # Speckit commands
-.specify/memory/constitution.md  # Updated principles
-project/                # Skeleton scaffold
-├── src/
-│   ├── __init__.py
-│   ├── main.py
-│   └── cli.py
-├── tests/
-│   ├── test_main.py
-│   └── test_cli.py
-├── pyproject.toml
-├── README.md
-└── requirements.txt
-.setup/                 # Orchestration
-├── setup.py           # Creates projects
-├── steps.yaml         # Generic workflow
-└── yaml-to-cli.py     # Script generator
-```
-
-### Workflow Change
-
-Old: Manual copy, manual spec, run bash script
-New: `python3 setup.py --project-name foo --spec "..."`
-
-Setup handles:
-1. Copy template (minus .setup/ and project/)
-2. Generate run.sh from steps.yaml with spec substituted
-3. Copy skeleton to {project_name}/
-
-### Constitution Updates
-
-Added to Principle VI:
-- "Activate local venv before any pip install. Global pip is forbidden."
-- "Use project-relative paths only. Never write to /tmp."
-
-### Template Updates
-
-- **test-review-template.md** - Created (was empty)
-- **product-review-template.md** - Created (was missing)
-- **speckit.implement.md** - Added note: "Project skeleton exists, fill existing files"
-
-### First Complete Cycle
-
-BlogTest finished successfully:
-- Qwen: Spec → Tasks → Implement (free, local)
-- Kimi: Landed product review ($0.60)
-- **Total cost: $0.60** vs $2.50 for Kimi-only
-- **Savings: 4:1**
-
-Qwen limit: Package-level debugging (context fills, loses thread)
-Kimi value: Landing messy implementations
-
-### Current Test
-
-**opencode-runner**: Python program to replace bash script generation
-- Reads YAML workflow
-- Executes opencode commands via subprocess
-- Captures output, handles --continue, logs progress
-- Being built with Qwen via FullAutoTemplate workflow
-
-### New Lesson
-
-Pre-structure beats post-fix. Skeleton prevents whole categories of errors.
-
-
---
-- Ran full suite with the mission to create an upgraded running script. 
-- Script just replaces old bash script, but was created unattended mostly by qwen3.5
-
-## Phase 8: Template Discovery Failure (2026-03-19)
-
-**Problem:** opencode-runner experiment failed - code produced but non-functional, template ignored.
-
-**Root Cause:** Template embedded in `project/` folder but opencode ran from root directory. Agents never "saw" the skeleton files and flailed.
-
-**Evidence:**
-- Project created `src/opencode_runner/` in wrong location
-- No use of pre-existing scaffold files
-- Agents created their own structure from scratch
-
-**Lesson:** Directory context matters. If agents don't see files in their working directory, they assume they don't exist.
-
-**Next Hypothesis:** Change working directory to `{projectname}/` before running opencode, OR flatten template structure.
+**Key Lesson from History:** Pre-structure beats post-fix. Skeleton prevents whole categories of errors.
 
 ---
 
 ## Phase 9: YAML-First Simplification (2026-03-19)
 
-**Insight:** Reviewing the broken code revealed unnecessary complexity.
-**Insight:** Qwen3.5 still looks promising with guard rails and reviews
+**Insight:** Reviewing broken code revealed unnecessary complexity.
+**Insight:** Qwen3.5 still promising with guard rails and reviews
 
 **Decision:** Beef up YAML file with richer metadata, simplify runner logic.
 
 **Changes Made:**
-1. Updated `steps.yaml` with explicit fields per step (template paths, validation hooks, timeout values)
+1. Updated `steps.yaml` with explicit fields per step (template paths, validation hooks)
 2. Stubbed `run_steps.py` as minimal executor - just reads YAML and executes
 
 **Goal:** One source of truth (YAML), dumb executor (Python), no logic in between.
@@ -381,13 +52,6 @@ STATUS: [PASS | FAIL]
 
 If FAIL: [one sentence reason]
 ```
-
-Templates updated:
-- `spec-review-template.md` ✅
-- `plan-review-template.md` ✅
-- `tasks-review-template.md` ✅
-- `test-review-template.md` (new) ✅
-- `product-review-template.md` (new) ✅
 
 ### 2. Enhanced Validation Steps
 Added `-*-verify-*-` checkpoints after every review:
@@ -410,24 +74,12 @@ commands:
 **Behavior:**
 1. Verify step reads review file
 2. If STATUS: FAIL → find retry_step_on_fail target
-3. Re-run target step with:
-   - Error context: "VALIDATION ERROR: {reason}"
-   - Review file attached via `-f` flag
+3. Re-run target step with error context and review file attached
 4. Track retry count per validation step
 5. Max retries exceeded → bail with full traceback
 
 ### 4. File Logger
-`workflow.log` in `._agents_not_allowed/` tracks:
-```
-1. /speckit.specify
-...
-15. -*-*-verify-*-
-RETRY: Step 15 failed, retrying from step 14
-REASON: Placeholders found in src/snake.py
-ATTEMPT: 1/3
-14. /speckit.implement
-...
-```
+`workflow.log` in `._agents_not_allowed/` tracks execution, retries, failures.
 
 ### 5. GPT-OSS-20B Test Results
 
@@ -437,38 +89,24 @@ ATTEMPT: 1/3
 
 **What Worked:**
 - ✅ 23-step workflow executed unattended
-- ✅ Verify-implementation detected placeholder: `#Impliment game here.`
+- ✅ Verify-implementation detected placeholder
 - ✅ Retry triggered automatically
-- ✅ Review file attached to retry context
 - ✅ Max retries exceeded, clean bail
 
 **What Failed:**
 - ❌ GPT-OSS-20B output placeholders instead of code
 - ❌ Even with 3 retries + error context, kept outputting stubs
-- ❌ "Fast but lazy" - 30+ min saved vs Qwen, but useless output
+- ❌ Might work with a higher temperature, but command line opencode doesn't support that.
 
 **Verdict:** GPT-OSS-20B unsuitable for implement step. Retry system validated.
-
-### Architecture Validated
-
-The retry loop design works:
-1. Validation detects failure
-2. Retry with context
-3. Either fixes or exhausts retries
-4. Clear logging of entire flow
-
-**23 steps now** (was 18):
-- Each review followed by verify
-- Each verify can retry upstream step
-- No manual intervention needed
 
 ---
 
 ## Phase 11: Compacted Verification System (2026-03-20)
 
-**Problem:** 23 steps (9 were just verification). Wasteful rebuilds when review file missing (would retry upstream step instead of just regenerating the file).
+**Problem:** 23 steps (9 were just verification). Wasteful rebuilds when review file missing.
 
-**Solution:** Integrate verification into commands that need it
+**Solution:** Integrate verification into commands that need it.
 
 ### New YAML Structure
 ```yaml
@@ -479,8 +117,8 @@ commands:
     verify:
       files:
         - "spec-review.md"
-      retry_step_on_fail: "/speckit.spec-review"        # Review FAILED
-      retry_step_on_file_not_found: "/speckit.spec-review"  # File missing
+      retry_step_on_fail: "/speckit.spec-review"
+      retry_step_on_file_not_found: "/speckit.spec-review"
 
   - command: "/speckit.implement"
     model: coder-model
@@ -507,53 +145,104 @@ commands:
    - `Command` class parses `verify` and `verify_implementation` attributes
    - Main loop handles all retry logic uniformly
 
-### Efficiency Gains
-
-**Before:**
-- File missing → Verify step fails → Retry upstream step (wasteful rebuild)
-- 23 steps, complex step ordering
-
-**After:**
-- File missing → Retry same command (cheap regeneration)
-- Review FAILED → Retry upstream step (correct behavior)
-- 14 steps, each self-contained
-
-### Runner Changes
-
-**Command class:**
-```python
-class Command:
-    def __init__(self, data: dict):
-        self.command = data.get("command")
-        self.model = data.get("model")
-        self.files = data.get("files", [])
-        self.verify = data.get("verify")                    # New
-        self.verify_implementation = data.get("verify_implementation", False)  # New
-```
-
-**Main loop pattern:**
-```python
-# Execute command
-exit_code = self.execute_command(cmd.command, ...)
-
-# Run verification if configured
-if exit_code == 0 and cmd.verify_implementation:
-    success, error = self.verify_implementation()
-    
-if exit_code == 0 and cmd.verify:
-    success, error = self.verify_files(cmd.verify["files"])
-
-# Handle failures with appropriate retry target
-if file_not_found:
-    retry_step = cmd.verify.get("retry_step_on_file_not_found", i)
-elif review_failed:
-    retry_step = cmd.verify.get("retry_step_on_fail")
-```
-
 ### Timestamped Logs
-
-Log files now include timestamp:
-- `workflow_20260320_181132.log` instead of `workflow.log`
-- Prevents overwriting previous runs
+Log files now include timestamp: `workflow_20260320_181132.log`
 
 ---
+
+## Phase 12: Functional Refactor (2026-03-21)
+
+**Goal:** Cleaner architecture using functional programming principles
+
+### Changes Made
+
+**Before:** Class-based `OpenCodeExecutor` with mutable state scattered throughout
+
+**After:** Pure functions with immutable data structures, maybe overkill, but much nicer than the mess from before
+
+```python
+@dataclass(frozen=True)
+class Command:
+    name: str
+    model_alias: Optional[str]
+    files: tuple
+    verify: Optional[dict]
+    verify_implementation: bool
+```
+
+**Pure Functions:**
+- `load_config()` - Returns immutable `Config`
+- `verify_files()` - Returns `VerificationResult`
+- `compute_retry_decision()` - Returns `RetryDecision`
+- `find_feature_dir()` - Returns `Optional[Path]`
+
+**I/O Isolation:**
+- `write_log()`, `create_logger()` - File operations
+- `execute_opencode()` - Subprocess execution
+- All side effects in dedicated section
+
+### Enhanced Verification Output
+
+```
+======= VERIFYING =======
+Feature directory: specs/001-console-snake-game
+Files to verify: ['spec.md']
+  spec.md: FOUND
+  spec-review.md: FOUND
+    Review status: PASS
+======= PASS =======
+```
+
+### Feature Directory Selection
+
+- Finds highest numbered directory (e.g., `001-alpha`, `002-beta` → `002-beta`)
+- Ignores non-numbered directories
+- Re-checks after each command execution
+
+---
+
+## Current Status
+
+**System:** Functional Python orchestrator (~650 lines)  
+**Architecture:** Pure functions + immutable data + isolated I/O  
+**Verification:** Detailed output with FOUND/NOT FOUND and PASS/FAIL  
+**Retry Logic:** Per-target-step counters with context preservation  
+
+**Ready for:** End-to-end testing with snake game
+
+---
+
+## Lessons Learned
+
+1. **Bugs happen:** OpenCode is new (1.2.27), has 5000+ open issues
+2. **Workarounds work:** File attachment bypasses broken `--command`
+3. **Cost matters:** Routing cheap models to bulk work saves 10x
+4. **Rescue is hard:** Restarting clean often beats debugging partial runs
+5. **Meta is the point:** We built automation for building automation
+6. **Functional > OOP in small scripts:** Immutable data prevents whole classes of bugs in small scripts.
+7. **Visibility matters:** Clear verification output saves debugging time
+
+---
+
+## Tools That Work
+
+- `opencode run -f cmd.md -f template.md --model X "prompt"` ✅
+- `python3 run_steps.py` ✅ (functional refactor)
+- `python3 setup.py --project-name foo --spec "..."` ✅
+- Session recovery via `--continue` ✅
+- Verification with detailed output ✅
+
+## Tools That Don't Work
+
+- `opencode run --command /speckit.specify` ❌ (bug #15150)
+- HTTP API `/session/{id}/command` ❌ (same bug)
+- GPT-OSS-20B for implement step ❌ (placeholders instead of code)
+
+---
+
+## What's Next
+
+1. **End-to-end test:** Validate with snake game
+2. **Cost tracking:** Token/cost per step logging
+3. **Multi-feature support:** Queue multiple feature directories
+4. **Parallel/Queue execution:** Run independent features concurrently or in a queue. Queue for local agents that might slow each other down with parallel runs.

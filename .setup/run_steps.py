@@ -151,15 +151,28 @@ def get_log_dir(yaml_path: Path) -> Path:
 
 
 def find_feature_dir(base_dir: Path) -> Optional[Path]:
-    """Find first subdirectory in specs/ relative to base directory."""
+    """Find the highest numbered feature directory in specs/."""
+    import re
     specs_dir = base_dir / "specs"
     if not specs_dir.exists():
         return None
 
+    # Collect only numbered feature directories
+    features = []
     for item in specs_dir.iterdir():
         if item.is_dir():
-            return item
-    return None
+            # Extract leading digits (e.g., "001-feature-name" -> 1)
+            match = re.match(r'^(\d+)', item.name)
+            if match:
+                features.append((int(match.group(1)), item))
+            # Skip non-numbered directories
+
+    if not features:
+        return None
+
+    # Sort by number descending, return highest
+    features.sort(key=lambda x: x[0], reverse=True)
+    return features[0][1]
 
 
 # ============================================================================
@@ -502,6 +515,7 @@ def run_workflow(
     feature_dir = find_feature_dir(project_root)
 
     print(f"Loaded {len(config.commands)} commands for: {config.project_name}")
+    print(f"Feature directory: {feature_dir}")
     print(f"Defined models: {list(config.models.keys())}")
     print(f"Max retries per validation: {config.max_retries}")
 

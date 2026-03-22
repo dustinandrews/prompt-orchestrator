@@ -2,8 +2,8 @@
 
 **Project:** FullAutoTemplate - Reusable template for bootstrapping code generators  
 **Location:** `/home/nanobot/.nanobot/workspace/projects/FullAutoTemplate/`  
-**Last Updated:** 2026-03-20  
-**Status:** ACTIVE - System refactor complete, ready for next test
+**Last Updated:** 2026-03-21  
+**Status:** ACTIVE - Functional refactor complete, verification output enhanced
 
 ---
 
@@ -59,7 +59,7 @@ cat ._agents_not_allowed/workflow_*.log
 
 ## YAML Configuration
 
-### Model Aliases
+### Model Aliases - subject to change, but these are the base case
 ```yaml
 models:
   - reviewer-model:
@@ -131,7 +131,13 @@ FullAutoTemplate/
 ├── .setup/
 │   ├── setup.py              # Creates new projects
 │   ├── run_steps.py          # Workflow executor
-│   └── steps.yaml            # Master workflow config
+│   ├── steps.yaml            # Master workflow config
+│   ├── HANDOFF.md            # This file
+│   ├── JOURNEY.md            # Development history
+│   ├── TODO.md               # Open questions
+│   ├── WHYANDWHAT.md         # Public rationale
+│   ├── WORKSTYLE.md          # Working constraints
+│   └── .archive/             # Archived versions
 │
 ├── .specify/
 │   ├── templates/            # All speckit templates
@@ -148,17 +154,6 @@ FullAutoTemplate/
 │
 ├── .opencode/
 │   └── command/              # Speckit command definitions
-│       ├── speckit.specify.md
-│       ├── speckit.spec-review.md
-│       ├── speckit.plan.md
-│       ├── speckit.plan-review.md
-│       ├── speckit.tasks.md
-│       ├── speckit.analyze.md
-│       ├── speckit.tasks-review.md
-│       ├── speckit.implement.md
-│       ├── speckit.test-review.md
-│       ├── speckit.product-review.md
-│       └── compact.md
 │
 ├── project/                  # Skeleton scaffold (copied to new projects)
 │   ├── src/
@@ -175,39 +170,55 @@ FullAutoTemplate/
 
 ## Current Implementation Details
 
-### run_steps.py Key Classes
+### run_steps.py Architecture
 
-**WorkflowLogger:**
-- Timestamped log files: `workflow_YYYYMMDD_HHMMSS.log`
-- Tracks step execution, retries, failures
+**Functional Style:**
+- Pure functions for configuration loading, verification, retry logic
+- Immutable data structures (`@dataclass(frozen=True)`)
+- Side effects isolated to I/O section
+- Explicit state management in main loop
 
-**Command:**
+**Key Data Structures:**
 ```python
+@dataclass(frozen=True)
 class Command:
-    command: str              # The speckit command
-    model: str                # Model alias (reviewer-model, coder-model)
-    files: List[str]          # Files to attach via -f
-    verify: Dict              # File verification config
-    verify_implementation: bool  # Scan src/ for placeholders
+    name: str
+    model_alias: Optional[str]
+    files: tuple
+    verify: Optional[dict]
+    verify_implementation: bool
+    retry_step_on_fail: Optional[str]
 ```
 
-**OpenCodeExecutor:**
-- Loads YAML, resolves model aliases
-- Executes commands via `opencode run` subprocess
-- Runs verification after successful commands
-- Handles retry logic with per-step counters
+**Verification Output Format:**
+```
+======= VERIFYING =======
+Feature directory: /path/to/specs/001-feature
+Files to verify: ['spec.md']
+  spec.md: FOUND
+  spec-review.md: FOUND
+    Review status: PASS
+======= PASS =======
+```
 
 ### Verification Functions
 
-**verify_files(files):**
+**verify_files(feature_dir, files):**
 - Checks file exists in `specs/{feature-dir}/`
 - If `-review.md` file: parses STATUS: PASS/FAIL
-- Returns (success, error_message)
+- Returns `VerificationResult` with detailed output
 
-**verify_implementation():**
+**verify_implementation(base_dir):**
 - Scans `src/` and `tests/` directories
-- Looks for placeholder patterns: `# TODO`, `# FIXME`, `# Implement`, etc.
-- Returns (success, error_message)
+- Looks for placeholder patterns: `{{ }}` (Jinja-style)
+- Returns `VerificationResult` with file list if found
+
+### Feature Directory Selection
+
+**find_feature_dir(base_dir):**
+- Finds highest numbered directory in `specs/`
+- Ignores non-numbered directories
+- Example: `001-alpha`, `002-beta` → returns `002-beta`
 
 ---
 
@@ -215,48 +226,48 @@ class Command:
 
 1. **Model hallucination:** Qwen sometimes outputs "Recommended command:" instead of making changes
 2. **Context limits:** Long specs can fill Qwen context window
-3. **No checkpoint/resume:** Must restart from specific step if interrupted
-4. **Single feature directory:** Finds first subdir in `specs/`, not configurable
+3. **No checkpoint/resume:** Must restart from specific step if interrupted - feature recorded for later.
+4. **Single feature workflow:** One feature directory per workflow run
 
 ---
 
-## Recent Changes (2026-03-20)
+## Recent Changes (2026-03-21)
 
-### Compacted Verification System
-**Before:** 23 steps (9 separate verification steps)  
-**After:** 14 steps (verification integrated into commands)
+### Functional Refactor
+- Converted from class-based to functional architecture
+- Immutable data structures throughout
+- Pure functions for business logic
+- Side effects isolated to explicit I/O section
 
-**Benefits:**
-- 39% fewer steps
-- File-not-found retries are cheap (same command, not upstream)
-- Cleaner YAML structure
-- No magic `-*-verify-*-` command prefixes
+### Enhanced Verification Output
+- Clear section headers (`======= VERIFYING =======`)
+- Per-file FOUND/NOT FOUND status
+- Review PASS/FAIL status for review files
+- Consistent PASS/FAIL summary
 
-### Timestamped Logs
-- Log files now include timestamp: `workflow_20260320_181132.log`
-- Prevents overwriting previous run logs
+### Feature Directory Logic
+- Now selects highest numbered directory (for multi-feature projects)
+- Ignores non-numbered directories
+- Re-checks after each command (for newly created specs)
 
-### Null Model Error
-- `model: null` now raises `ValueError` (was unpredictable)
-- All steps must specify valid model alias
+---
+
+## Historical Context
+
+See `.archive/HANDOFF.2026-03-20.md` for full development history including:
+- HTTP API false starts (OpenCode bug #15150)
+- YAML-to-CLI generator evolution
+- Model routing strategy development
+- Retry system architecture decisions
 
 ---
 
 ## Next Steps / TODO
 
-1. **Test with Qwen:** Run snake game test to validate compacted system
+1. **Test end-to-end:** Run snake game test to validate refactored system
 2. **Cost tracking:** Add token/cost logging per step
-3. **Session persistence:** Support `--continue` for opencode session reuse
+3. **Session persistence:** Support `--continue` for opencode session reuse [complete]
 4. **Recommendation detection:** Auto-retry when Qwen suggests commands instead of executing
-
----
-
-## Files Modified Today
-
-- `.setup/steps.yaml` - Compacted to 14 steps with inline verification
-- `.setup/run_steps.py` - Updated Command class, verification logic, retry handling
-- `.setup/JOURNEY.md` - Added Phase 11 documentation
-- `.setup/HANDOFF.md` - This file
 
 ---
 
@@ -264,4 +275,4 @@ class Command:
 
 **For AI assistants:** Read this file first when picking up this project. Check `._agents_not_allowed/workflow_*.log` for recent activity.
 
-**Key constraint:** Files in `._agents_not_allowed/` are hands-off unless explicitly asked to modify.
+**Key constraint:** Files in `._agents_not_allowed/` are hands-off unless explicitly asked to modify. Meant to keep opencode runner agents from getting confused by the contents.
