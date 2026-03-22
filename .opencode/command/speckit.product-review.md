@@ -1,13 +1,9 @@
 ---
-description: Phase 2 final review - golden path validation
+description: Final review - golden path validation
 handoffs:
   - label: Fix Product
     agent: speckit.implement
     prompt: Golden path defects must be fixed
-    send: true
-  - label: Ship It
-    agent: speckit.ship
-    prompt: Product validated - prepare for release
     send: true
 scripts:
   sh: scripts/bash/start-product.sh
@@ -96,7 +92,7 @@ Validate the core product works on the golden path. Time-boxed manual validation
 
 7. **Report & Handoff**
    - If **FAIL**: Display defects, handoff to `speckit.implement` to fix
-   - If **PASS**: Display "Golden path validated", handoff to `speckit.ship`
+   - If **PASS**: Display "Golden path validated", commit changes to the repo
 
 ## Rules
 - **10 MINUTE MAX**: Longer = product too complex

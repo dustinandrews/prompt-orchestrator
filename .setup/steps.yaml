@@ -4,9 +4,11 @@ message: "K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed."
 max_retries_per_validation: 3
 models:
   - reviewer-model:
-      model: "moonshotai/kimi-k2.5"
+      model: "openrouter/deepseek/deepseek-v3.2" 
+      #"moonshotai/kimi-k2.5"
   - coder-model:
-      model: "ollama/qwen3.5:35b"
+      model: "qwen/qwen3-coder-flash"
+      #"ollama/qwen3.5:35b"
 
 commands:
   - command: "/speckit.specify"
