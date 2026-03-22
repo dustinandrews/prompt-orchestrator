@@ -31,9 +31,6 @@ commands:
       retry_step_on_fail: "/speckit.specify"
       retry_step_on_file_not_found: "/speckit.spec-review"
 
-  - command: "/compact"
-    model: coder-model
-
   - command: "/speckit.plan"
     model: coder-model
     files:
@@ -54,9 +51,6 @@ commands:
         - "plan-review.md"
       retry_step_on_fail: "/speckit.plan"
       retry_step_on_file_not_found: "/speckit.plan-review"
-
-  - command: "/compact"
-    model: coder-model
 
   - command: "/speckit.tasks"
     model: coder-model
@@ -84,18 +78,12 @@ commands:
       retry_step_on_fail: "/speckit.tasks"
       retry_step_on_file_not_found: "/speckit.tasks-review"
 
-  - command: "/compact"
-    model: coder-model
-
   - command: "/speckit.implement"
     model: coder-model
     files:
       - ".opencode/command/speckit.implement.md"
     verify_implementation: true
     retry_step_on_fail: "/speckit.implement"
-
-  - command: "/compact"
-    model: coder-model
 
   - command: "/speckit.test-review"
     model: coder-model
