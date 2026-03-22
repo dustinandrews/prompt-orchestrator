@@ -73,7 +73,7 @@ def main():
     
     setup_dir = get_setup_dir()
     template_dir = get_template_dir()
-    workspace_dir = setup_dir.parent
+    workspace_dir = setup_dir.parent.parent
     
     project_slug = slugify(args.project_name)
     project_dir = workspace_dir / project_slug
