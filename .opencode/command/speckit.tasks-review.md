@@ -74,7 +74,7 @@ $ARGUMENTS
    
    **Date**: [DATE]
    **Reviewer**: speckit.tasks-review
-   **Status**: [PASS | NEEDS_REVISION | REJECT]
+   **Status**: [PASS | FAIL]
    
    ## Task Distribution
    | Category | Count | Percentage | Target | Status |
@@ -107,7 +107,7 @@ $ARGUMENTS
    - [ ] No premature optimization tasks
    
    ## Decision
-   **Status**: [PASS/NEEDS_REVISION/REJECT]
+   **Status**: [PASS | FAIL]
    **If REVISE**: Remove flagged tasks, rebalance, regenerate
    **If PASS**: Proceed to `/speckit.implement`
    ```

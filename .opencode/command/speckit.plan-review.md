@@ -74,7 +74,7 @@ $ARGUMENTS
    
    **Date**: [DATE]
    **Reviewer**: speckit.plan-review
-   **Status**: [PASS | NEEDS_REVISION | REJECT]
+   **Status**: [PASS | FAIL]
    
    ## Complexity Metrics
    - **Total Tasks**: [N] ([status: OK/TOO_MANY])
@@ -90,10 +90,10 @@ $ARGUMENTS
    ## Constitution Compliance
    | Principle | Status | Notes |
    |-----------|--------|-------|
-   | Library-First | [PASS/FAIL] | [Notes] |
-   | CLI Interface | [PASS/FAIL] | [Notes] |
-   | Test-First | [PASS/FAIL] | [Notes] |
-   | Simplicity | [PASS/FAIL] | [Notes] |
+| Library-First | STATUS: [PASS | FAIL] | [Notes] |
+| CLI Interface | STATUS: [PASS | FAIL] | [Notes] |
+| Test-First | STATUS: [PASS | FAIL] | [Notes] |
+| Simplicity | STATUS: [PASS | FAIL] | [Notes] |
    
    ## Alignment with Spec
    | P1 Story | Covered | Notes |
@@ -101,7 +101,7 @@ $ARGUMENTS
    | [Story] | [Y/N] | [Gap if N] |
    
    ## Decision
-   **Status**: [PASS/NEEDS_REVISION/REJECT]
+   **Status**: [PASS | FAIL]
    **If REJECT**: [Why and what to change]
    **If NEEDS_REVISION**: [List specific changes]
    ```

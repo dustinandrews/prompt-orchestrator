@@ -65,12 +65,12 @@ $ARGUMENTS
    
    **Date**: [DATE]
    **Reviewer**: speckit.spec-review
-   **Status**: [PASS | NEEDS_REVISION | REJECT]
+   **Status**: [PASS | FAIL]
    
    ## Constitution Compliance
    | Principle | Status | Issue | Fix |
    |-----------|--------|-------|-----|
-   | [Name] | [PASS/FAIL] | [Quote violation] | [Action] |
+   | [Name] | STATUS: [PASS | FAIL] | [Quote violation] | [Action] |
    
    ## Anti-Patterns Found
    | Pattern | Severity | Location | Fix |
@@ -83,7 +83,7 @@ $ARGUMENTS
    - Testable Criteria: [Y/N]
    
    ## Decision
-   **Status**: [PASS/NEEDS_REVISION/REJECT]
+   **Status**: [PASS | FAIL]
    **Next Step**: [Action with handoff]
    ```
 
