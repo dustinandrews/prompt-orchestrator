@@ -1,0 +1,52 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      
+      - name: Validate pyproject.toml
+        run: python3 -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"
+      
+      - name: Validate steps.yaml
+        run: python3 -c "import yaml; yaml.safe_load(open('.setup/steps.yaml'))"
+      
+      - name: Validate template files exist
+        run: |
+          python3 -c "
+          import os
+          required = [
+            'template/.specify/templates/spec-template.md',
+            'template/.opencode/command/speckit.specify.md',
+            '.setup/steps.yaml',
+            '.setup/setup.py'
+          ]
+          missing = [f for f in required if not os.path.exists(f)]
+          if missing:
+            raise Exception(f'Missing files: {missing}')
+          print('All required files present')
+          "
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      
+      - name: Install dependencies
+        run: pip install pytest pyyaml -q
+      
+      - name: Run tests
+        run: pytest tests/ -v

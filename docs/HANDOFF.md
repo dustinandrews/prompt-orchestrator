@@ -265,16 +265,18 @@ Files to verify: ['spec.md']
 ### GitHub Prep Status (2026-03-22)
 
 **Completed:**
-- ✅ README.md - Constitution section, badges, Advanced Usage
-- ✅ .gitignore - Python, IDE, OS, logs
-- ✅ pyproject.toml - Python packaging
-- ✅ LICENSE - MIT
-- ✅ Clean up logs - No workflow_*.log files found
-- ✅ Clean up backups - No .bak.* files found
-- ✅ Git history verified - 15 clean commits, no squash needed
+- README.md ✅
+- .gitignore ✅
+- pyproject.toml ✅
+- LICENSE (MIT) ✅
+- Log cleanup ✅
+- Backup cleanup ✅
+- Git history verified ✅
+- CONTRIBUTING.md ✅
+- --target-dir option for setup.py ✅
 
 **Pending:**
-- ⏳ .github/ - Add CI workflows for testing
+- .github/ CI workflow ⏳
 
 ---
 
