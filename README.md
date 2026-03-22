@@ -95,8 +95,12 @@ Caveat Emptor if you modify it.
 .opencode/
 └── command/         # speckit command definitions
 
-# have your AI agent read docs/*.md to understand project.
 docs/                # Development history and documentation
+
+._agents_not_allowed/   # Runtime files (logs, per-project steps.yaml)
+    # Hidden to prevent AI agents from reading YAML and self-executing
+    # Template copies here during project setup
+```
 ├── JOURNEY.md       # Project history
 ├── HANDOFF.md       # Technical handoff
 └── ...
