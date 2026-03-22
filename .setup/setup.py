@@ -88,11 +88,19 @@ def main():
         required=True,
         help="Path to user specification markdown file"
     )
+    parser.add_argument(
+        "--target-dir",
+        help="Target directory for new project (default: parent of speckit-orchestrator)"
+    )
     args = parser.parse_args()
     
     setup_dir = get_setup_dir()
     template_dir = get_template_dir()
-    workspace_dir = setup_dir.parent.parent
+    
+    if args.target_dir:
+        workspace_dir = Path(args.target_dir).resolve()
+    else:
+        workspace_dir = setup_dir.parent.parent
     
     project_slug = slugify(args.project_name)
     project_dir = workspace_dir / project_slug
