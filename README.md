@@ -13,6 +13,8 @@ Each step verified before proceeding. Review files protected by hash-based tampe
 
 - [opencode](https://github.com/opencode-ai/opencode) - AI coding agent
 - optional: [speckit](https://github.com/dustinandrews/speckit) - Coding template library
+- Some kind of API key or Ollama. This will work with Qwen3.5 on Ollama.
+- Best results with more powerful coding models like deepseek-v3.2
 - Python 3.12+
 
 ## Quick Start
