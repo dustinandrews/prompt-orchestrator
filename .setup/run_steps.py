@@ -619,18 +619,20 @@ def run_workflow(
         decision = compute_retry_decision(context, exec_result, verify_result, config, config.commands)
 
         if decision.should_retry:
-            # Update retry counter for the target step (the one we're jumping to)
-            target_retry_count = state['retry_counters'].get(decision.target_step, 0) + 1
-            state['retry_counters'][decision.target_step] = target_retry_count
+            # Track retries for the failing step, not the jump target
+            # This ensures we check 'how many times has THIS step failed' not 'how many times has target failed'
+            fail_step = step_num
+            fail_step_retry_count = state['retry_counters'].get(fail_step, 0) + 1
+            state['retry_counters'][fail_step] = fail_step_retry_count
 
             print(f"\n[RETRY] {verify_result.message or exec_result.error_msg}")
-            print(f"[RETRY] Attempt {target_retry_count}/{config.max_retries} for step {decision.target_step}")
+            print(f"[RETRY] Attempt {fail_step_retry_count}/{config.max_retries} for step {decision.target_step}")
             print(f"[RETRY] Re-running step {decision.target_step}: {decision.target_command}")
 
             log_retry(
                 log_file, step_num, decision.target_step,
                 verify_result.message or exec_result.error_msg or "Command failed",
-                target_retry_count, config.max_retries
+                fail_step_retry_count, config.max_retries
             )
 
             # Set up retry state
