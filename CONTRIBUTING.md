@@ -8,8 +8,8 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/dustinandrews/speckit-orchestrator.git
-cd speckit-orchestrator
+git clone https://github.com/dustinandrews/prompt-orchestrator.git
+cd prompt-orchestrator
 pip install -e .
 ```
 

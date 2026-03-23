@@ -1,4 +1,4 @@
-# speckit-orchestrator
+# prompt-orchestrator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
@@ -24,8 +24,8 @@ Each step verified before proceeding. Review files protected by hash-based tampe
 
 ```bash
 # Clone this repo
-git clone https://github.com/dustinandrews/speckit-orchestrator.git
-cd speckit-orchestrator
+git clone https://github.com/dustinandrews/prompt-orchestrator.git
+cd prompt-orchestrator
 
 # Install
 
