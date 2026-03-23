@@ -21,22 +21,22 @@ def test_steps_yaml_has_required_fields():
     """Verify each command has required fields."""
     config = yaml.safe_load(open(".setup/steps.yaml"))
     for i, cmd in enumerate(config["commands"]):
-        assert "command" in cmd, f"Command {i} missing 'command' field"
+        assert "step" in cmd, f"Step {i} missing 'step' field"
 
 
 def test_template_structure():
     """Verify template directory structure exists."""
     template_dir = Path("template")
     assert template_dir.is_dir()
-    assert (template_dir / ".specify" / "templates").is_dir()
-    assert (template_dir / ".opencode" / "command").is_dir()
+    assert (template_dir / ".orchestrator" / "templates").is_dir()
+    assert (template_dir / ".orchestrator" / "command").is_dir()
 
 
 def test_required_template_files():
     """Verify all required template files exist."""
     required = [
-        "template/.specify/templates/spec-template.md",
-        "template/.opencode/command/speckit.specify.md",
+        "template/.orchestrator/templates/spec-template.md",
+        "template/.orchestrator/command/speckit.specify.md",
     ]
     missing = [f for f in required if not Path(f).exists()]
     assert not missing, f"Missing files: {missing}"
