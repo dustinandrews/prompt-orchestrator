@@ -298,3 +298,40 @@ Executing: /speckit.plan
 ```
 
 **Status:** In progress, monitoring for tamper detection.
+
+---
+
+## Phase 14: Refactor & GitHub (2026-03-22)
+
+### Project Renamed
+- speckit-orchestrator -> prompt-orchestrator
+- Better reflects purpose: orchestrating LLM workflows
+
+### Field Rename
+- `command: "/speckit.xxx"` -> `step: "xxx"`
+- Cleaner, no misleading /speckit prefix
+- References updated in all YAML files
+
+### Directory Consolidation
+- Moved `.opencode/command/` and `.specify/templates/` to `.orchestrator/`
+- Single location for all prompt files
+- Updated paths in steps.yaml
+
+### Bug: Retry Counter Regression
+- Bug introduced during Phase 13 functional refactor
+- Counter tracked `target_step` instead of failing `step_num`
+- Fixed with clear comment explaining the logic
+- Verified with snake4 end-to-end test
+
+### GitHub Launch
+- Repository created and pushed
+- https://github.com/dustinandrews/prompt-orchestrator
+
+### Lessons
+1. Functional refactors can introduce subtle regressions
+2. End-to-end testing catches what unit tests miss
+3. Framework validated, model limitations exposed
+
+### Next
+- steps-basic.yaml / steps-full.yaml split
+- Break up implement step for Qwen compatibility

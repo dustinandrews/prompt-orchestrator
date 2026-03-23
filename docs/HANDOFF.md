@@ -255,28 +255,34 @@ Files to verify: ['spec.md']
 
 ## Recent Changes (2026-03-22)
 
-### Removed Non-existent CLI Flags
-- `--debug` and `--log-level` flags removed from `run_steps.py`. Not valid in current OpenCode CLI.
+### Project Renamed to prompt-orchestrator
+- Renamed from speckit-orchestrator to better reflect purpose
+- Updated remote URL, README, CONTRIBUTING.md, pyproject.toml
 
-### Review File Tamper Detection
-- Added MD5 hash tracking for review files
-- Fails workflow if review file modified by downstream step
+### Retry Counter Bug Fixed
+- Bug introduced in Phase 13 functional refactor
+- Counter tracked per target step instead of failing step
+- Fixed: now tracks retries for failing step, not jump target
 
-### GitHub Prep Status (2026-03-22)
+### Refactor Complete (refactor/step-rename branch)
+- Renamed 'command' field to 'step' in steps.yaml
+- Removed /speckit. prefix from step names
+- Consolidated .opencode/command/ and .specify/templates/ to .orchestrator/
+- Removed unused commands and templates
+- Updated test paths for new structure
 
-**Completed:**
-- README.md ✅
-- .gitignore ✅
-- pyproject.toml ✅
-- LICENSE (MIT) ✅
-- Log cleanup ✅
-- Backup cleanup ✅
-- Git history verified ✅
-- CONTRIBUTING.md ✅
-- --target-dir option for setup.py ✅
+### GitHub Push
+- Repository: https://github.com/dustinandrews/prompt-orchestrator
+- Push date: 2026-03-22
+
+### End-to-End Test Results
+- snake4: reached step 8 (implement)
+- Retry logic validated: framework works correctly
+- Qwen limitation: implement step too large, needs breakdown (future work)
 
 **Pending:**
-- .github/ CI workflow ⏳
+- steps-basic.yaml and steps-full.yaml (future)
+- Break up implement step into smaller steps
 
 ---
 
