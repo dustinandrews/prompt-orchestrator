@@ -98,7 +98,7 @@ def parse_models(raw_models: list) -> dict:
 def parse_command(data: dict) -> Command:
     """Parse single command from YAML dict."""
     return Command(
-        name=data.get("command", ""),
+        name=data.get("step", ""),
         model_alias=data.get("model"),
         files=tuple(data.get("files", [])),
         verify=data.get("verify"),
