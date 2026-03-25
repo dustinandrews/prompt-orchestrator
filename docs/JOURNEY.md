@@ -335,3 +335,36 @@ Executing: /speckit.plan
 ### Next
 - steps-basic.yaml / steps-full.yaml split
 - Break up implement step for Qwen compatibility
+
+---
+
+## Phase 15: Context Management Workaround (2026-03-22)
+
+### Problem: Session Context Exhaustion
+
+**Issue:** opencode commands (`/compact`) cannot be invoked from CLI due to opencode bug. Auto-compact triggers at 95% context, which is too late for smaller models like Qwen 3.5.
+
+**Current workaround:**
+1. Ctrl-C to interrupt run_steps.py
+2. `opencode -s` (start interactive session)
+3. `/compact` (manual compaction)
+4. `/exit` (quit session)
+5. `run_steps.py --step N` (resume at current step)
+
+### Research Findings
+
+- opencode is archived, moved to [Crush](https://github.com/charmbracelet/crush)
+- Crush has no non-interactive mode (TUI-only)
+- opencode schema doesn't include configurable compact threshold
+- No CLI way to invoke `/compact` without interactive terminal
+
+### Documentation Added
+
+- README.md: Context Management Workaround section
+- JOURNEY.md: This entry
+- HANDOFF.md: Known Limitations section updated
+
+### Next
+- File bug report with opencode/Crush for configurable compact threshold
+- Consider switching to different AI harness tool
+- Break up implement step to reduce context requirements

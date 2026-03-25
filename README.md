@@ -91,6 +91,18 @@ See `.specify/memory/constitution.md` for full rules.
 
 Caveat Emptor if you modify it. 
 
+## Context Management Workaround
+
+opencode has a known issue where the `/compact` command requires an interactive terminal. If the session grows too large for the model context:
+
+1. **Ctrl-C** to interrupt run_steps.py
+2. Run `opencode -s` to start interactive session
+3. Type `/compact` and press Enter
+4. Type `/exit` to quit
+5. Resume with `python3 ._agents_not_allowed/run_steps.py --step N` (replace N with your current step)
+
+> **Note:** opencode has ~5000 open issues. The `autoCompact` feature (if it exists) triggers at 95% context, which is too late for smaller models. Manual compaction is currently required.
+
 ## Architecture
 
 ```

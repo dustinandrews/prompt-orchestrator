@@ -15,6 +15,7 @@ build/
 venv/
 ENV/
 env/
+venv-orchestrator/
 
 # IDE
 .vscode/

@@ -224,11 +224,12 @@ Files to verify: ['spec.md']
 
 ## Known Limitations
 
-1. **Model hallucination:** Qwen sometimes outputs "Recommended command:" instead of making changes
-2. **Context limits:** Long specs can fill Qwen context window
-3. **No checkpoint/resume:** Must restart from specific step if interrupted - feature recorded for later.
-4. **Single feature workflow:** One feature directory per workflow run
-5. **No verbose/debug flag:** Current OpenCode CLI does not support --debug or --log-level flags.
+1. **opencode commands broken:** `/speckit.*` commands cannot be invoked from CLI (opencode bug #15150). Use file attachment workaround.
+2. **Context exhaustion:** Session context grows with each step. Models choke before reaching end.
+3. **Manual compact required:** `/compact` needs interactive terminal. See README "Context Management Workaround" section.
+4. **autoCompact too late:** Triggers at 95% context, too late for smaller models.
+5. **No checkpoint/resume:** Must restart from specific step if interrupted.
+6. **Single feature workflow:** One feature directory per workflow run.
 
 ---
 
@@ -284,9 +285,16 @@ Files to verify: ['spec.md']
 - steps-basic.yaml and steps-full.yaml (future)
 - Break up implement step into smaller steps
 
----
+### Recent Changes (2026-03-22 continued)
 
-## Historical Context
+**Phase 15: Context Management**
+- opencode has ~5000 open bugs, commands can't be invoked from CLI
+- autoCompact triggers at 95% context (too late)
+- Manual workaround documented in README
+- Crusher (successor) has no non-interactive mode
+- Added workaround to Known Limitations
+
+### Historical Context
 
 See `.archive/HANDOFF.2026-03-20.md` for full development history including:
 - HTTP API false starts (OpenCode bug #15150)
@@ -298,10 +306,11 @@ See `.archive/HANDOFF.2026-03-20.md` for full development history including:
 
 ## Next Steps / TODO
 
-1. **Test end-to-end:** Run snake game test to validate refactored system
-2. **Cost tracking:** Add token/cost logging per step
-3. **Session persistence:** Support `--continue` for opencode session reuse [complete]
-4. **Recommendation detection:** Auto-retry when Qwen suggests commands instead of executing
+1. ~~Test end-to-end: Run snake game test to validate refactored system~~
+2. ~~Session persistence: Support `--continue` for opencode session reuse~~
+3. **Context management:** Investigate alternative AI harness with better CLI
+4. **Break up implement step:** Reduce context requirements for Qwen
+5. **File opencode bug report:** Request configurable compact threshold
 
 ---
 
