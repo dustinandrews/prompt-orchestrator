@@ -24,8 +24,8 @@ jobs:
           python3 -c "
           import os
           required = [
-            'template/.specify/templates/spec-template.md',
-            'template/.opencode/command/speckit.specify.md',
+            'template/.orchestrator/templates/spec-template.md',
+            'template/.orchestrator/command/speckit.specify.md',
             '.setup/steps.yaml',
             '.setup/setup.py'
           ]
