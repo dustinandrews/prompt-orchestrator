@@ -42,11 +42,11 @@ python3 .setup/setup.py
 # Configure AI provider (see [opencode docs](https://opencode.ai/docs/))
 
 # Create new project
-python3 .setup/setup.py --project-name myproject --spec "Build a CLI tool that..."
+python3 .setup/setup.py --project-name myproject --spec-path <spec file path>
 
 # Run workflow
 cd myproject
-python3 ._agents_not_allowed/run_steps.py
+python3 ._agents_not_allowed/run_steps.py --config ._agents_not_allowed/steps.yaml
 ```
 
 ## Features
@@ -124,6 +124,24 @@ docs/                # Development history (not copied)
 ├── HANDOFF.md       # Technical handoff
 └── ...
 ```
+
+## Spec guide
+Creating a useful spec for the system is important for success. Small programs with a tight scope work best. Think Unix utils like grep or curl that do one thing well. Focus on the smallest feature set to start with.
+For example if you were creating a curl like program this would work well. Remember that a lot of the boilerplate implementation details are in the project constitution so you don't need to add a lot about "how".
+```Sample spec
+Write a CLI program that allows users to view web URL contents
+
+$ get-url --help
+usage:
+get-url --help                                  print this message an quit
+get-url <url>                                   retrieves the URL and writes the contents to SDTOUT
+get-url <url> --out-file <path_to_write>        write URL contents to file as UTF-8
+```
+That's it. The agent should be able to complete a working version of this program. More is not always better. 
+
+
+## Roadmap
+- Replace OpenCode with smolagents.
 
 ## License
 
