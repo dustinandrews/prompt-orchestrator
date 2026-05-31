@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "pyyaml>=6.0",
-    "smolagents>=1.17.0",
+    "smolagents[litellm]>=1.17.0",
 ]
 
 [project.optional-dependencies]
