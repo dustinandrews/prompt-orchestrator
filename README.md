@@ -1,9 +1,9 @@
 # prompt-orchestrator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
-Automated prompt orchestration workflow executor with review gates.
+Multi-step LLM workflow executor with review gates.
 
 ## What
 
@@ -12,40 +12,42 @@ Runs a multi-step code generation workflow unattended, powered by [opencode](htt
 
 Each step verified before proceeding. Review files protected by hash-based tamper detection to prevent later steps from re-doing reviews.
 
-## Prerequisites
-
-- [opencode](https://github.com/opencode-ai/opencode) - AI coding agent
-- Some kind of API key or Ollama. This will work with Qwen3.5 on Ollama.
-- Best results with more powerful coding models like deepseek-v3.2
-- Python 3.12+
-
 ## Quick Start
 
 ```bash
-# Clone this repo
-git clone https://github.com/dustinandrews/prompt-orchestrator.git
-cd prompt-orchestrator
-
 # Install
-
-## optionally install in isolated venv
-python3 -m venv venv
-source venv/bin/activate
-
-# install with dependancies
 pip install -e .
 
-# usage
-python3 .setup/setup.py 
-
-# Configure AI provider (see [opencode docs](https://opencode.ai/docs/))
-
-# Create new project
-python3 .setup/setup.py --project-name myproject --spec-path <spec file path>
+# Scaffold into existing project
+cd my-existing-project
+prompt-orchestrator init
 
 # Run workflow
+prompt-orchestrator run
+```
+
+Or create a new project from scratch:
+```bash
+prompt-orchestrator new --name myproject --spec spec.md
 cd myproject
-python3 ._agents_not_allowed/run_steps.py --config ._agents_not_allowed/steps.yaml
+prompt-orchestrator run
+```
+
+## Prerequisites
+
+- [opencode](https://github.com/opencode-ai/opencode) - AI coding agent
+- Some kind of API key or Ollama. Works with Qwen3.5 on Ollama for local inference.
+- Best results with more powerful coding models like deepseek-v3.2
+- Python 3.10+
+
+## CLI Usage
+
+```bash
+prompt-orchestrator init          # Scaffold workflow files into current project
+prompt-orchestrator run           # Execute workflow (from project root)
+prompt-orchestrator run --step 5  # Resume from step 5
+prompt-orchestrator new --name NAME --spec PATH  # Create new project from skeleton
+prompt-orchestrator --help        # Full help
 ```
 
 ## Features
@@ -60,13 +62,23 @@ python3 ._agents_not_allowed/run_steps.py --config ._agents_not_allowed/steps.ya
 
 ## Configuration
 
-Edit `.setup/steps.yaml` to configure models and retry behavior. Configure your AI provider in opencode (see [opencode providers docs](https://opencode.ai/docs/providers)).
+Edit `steps.yaml` in your project root to configure models and retry behavior. Configure your AI provider in opencode (see [opencode providers docs](https://opencode.ai/docs/providers)).
+
+### Model Aliases
+
+```yaml
+models:
+  - reviewer-model:
+      model: moonshotai/kimi-k2.5
+  - coder-model:
+      model: ollama/qwen3.5:35b
+```
 
 ## Advanced Usage
 
 **Resume after interruption:**
 ```bash
-python3 ._agents_not_allowed/run_steps.py --step 5
+prompt-orchestrator run --step 5
 ```
 Resume from step 5. Useful after Ctrl-C or network failure.
 
@@ -78,7 +90,7 @@ Continue the session to manually work on the project.
 
 ## Included Constitution
 
-This repo includes an opinionated constitution (`.specify/memory/constitution.md`) focused on building Python CLI programs:
+The scaffold includes an opinionated constitution (`.orchestrator/memory/constitution.md`) focused on building Python CLI programs:
 - **Library-first** - Extract reusable logic to libraries, keep scripts thin
 - **Simplicity** - Prefer simple solutions, avoid premature abstraction
 - **Test-first** - Tests validate behavior, not implementation
@@ -86,48 +98,39 @@ This repo includes an opinionated constitution (`.specify/memory/constitution.md
 
 The workflow enforces these principles via review gates. Plans flagged for over-engineering. Tasks flagged for wrong distribution.
 
-See `.specify/memory/constitution.md` for full rules.
-
-Caveat Emptor if you modify it. 
-
 ## Context Management Workaround
 
 opencode has a known issue where the `/compact` command requires an interactive terminal. If the session grows too large for the model context:
 
-1. **Ctrl-C** to interrupt run_steps.py
+1. **Ctrl-C** to interrupt
 2. Run `opencode -s` to start interactive session
 3. Type `/compact` and press Enter
 4. Type `/exit` to quit
-5. Resume with `python3 ._agents_not_allowed/run_steps.py --step N` (replace N with your current step)
-
-> **Note:** opencode has ~5000 open issues. The `autoCompact` feature (if it exists) triggers at 95% context, which is too late for smaller models. Manual compaction is currently required.
+5. Resume with `prompt-orchestrator run --step N` (replace N with your current step)
 
 ## Architecture
 
 ```
-.setup/              # Runner scripts (not copied to projects)
-├── run_steps.py     # Workflow executor
-└── setup.py         # Project bootstrapper
+prompt_orchestrator/        # Installable package
+├── cli.py                  # CLI entry point (init, run, new)
+├── runner.py               # Workflow executor
+└── scaffold/               # Files deployed to projects
+    ├── command/            # Orchestrator command definitions
+    ├── templates/          # Review templates
+    └── memory/             # Constitution and rules
 
-template/            # Template files (copied to each new project)
-├── .specify/
-│   ├── templates/   # Review templates
-│   └── memory/      # Constitution and rules
-├── .opencode/
-│   └── command/     # Orchestrator command definitions
-├── project/         # Skeleton scaffold
-└── steps.yaml       # Workflow definition
-
-docs/                # Development history (not copied)
-├── JOURNEY.md       # Project history
-├── HANDOFF.md       # Technical handoff
-└── ...
+project/                    # After init
+├── .orchestrator/          # Command files and templates
+├── ._agents_not_allowed/   # Runner and config (hidden from agents)
+├── steps.yaml              # Workflow definition
+└── userspec.md             # Your specification
 ```
 
-## Spec guide
-Creating a useful spec for the system is important for success. Small programs with a tight scope work best. Think Unix utils like grep or curl that do one thing well. Focus on the smallest feature set to start with.
-For example if you were creating a curl like program this would work well. Remember that a lot of the boilerplate implementation details are in the project constitution so you don't need to add a lot about "how".
-```Sample spec
+## Spec Guide
+
+Small programs with a tight scope work best. Think Unix utils like grep or curl that do one thing well. Focus on the smallest feature set to start with.
+
+```markdown
 Write a CLI program that allows users to view web URL contents
 
 $ get-url --help
@@ -136,8 +139,6 @@ get-url --help                                  print this message an quit
 get-url <url>                                   retrieves the URL and writes the contents to SDTOUT
 get-url <url> --out-file <path_to_write>        write URL contents to file as UTF-8
 ```
-That's it. The agent should be able to complete a working version of this program. More is not always better. 
-
 
 ## Roadmap
 - Replace OpenCode with smolagents.
