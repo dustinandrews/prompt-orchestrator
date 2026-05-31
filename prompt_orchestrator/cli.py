@@ -49,6 +49,14 @@ def cmd_init(args):
     """Scaffold orchestrator workflow files into an existing project."""
     project_dir = Path.cwd().resolve()
 
+    # Always scaffold .env.example (standalone file, independent of workflow)
+    env_example_src = _scaffold_dir() / ".env.example"
+    if env_example_src.exists():
+        env_example_dst = project_dir / ".env.example"
+        if not env_example_dst.exists() or args.force:
+            shutil.copy2(env_example_src, env_example_dst)
+            print(f"  Created: .env.example")
+
     # Check not already initialized
     if (project_dir / ".orchestrator").exists():
         print("Already initialized: .orchestrator/ exists")
@@ -62,14 +70,6 @@ def cmd_init(args):
         dst = orchestrator_dir / sub
         copy_tree(src, dst)
         print(f"  Created: {dst.relative_to(project_dir)}/")
-
-    # Copy .env.example to project root
-    env_example_src = _scaffold_dir() / ".env.example"
-    if env_example_src.exists():
-        env_example_dst = project_dir / ".env.example"
-        if not env_example_dst.exists() or args.force:
-            shutil.copy2(env_example_src, env_example_dst)
-            print(f"  Created: .env.example")
 
     # Create steps.yaml in ._agents_not_allowed/ only
     hidden_dir = project_dir / "._agents_not_allowed"
@@ -108,9 +108,7 @@ def cmd_run(args):
         print("ERROR: steps.yaml not found. Run 'prompt-orchestrator init' first.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"  Running [{yaml_path}]")
-
-    # Require .env in project root
+    # Require .env in project root (check before announcing run)
     dotenv = project_dir / ".env"
     if not dotenv.exists():
         example = project_dir / ".env.example"
@@ -119,6 +117,8 @@ def cmd_run(args):
         else:
             print(f"ERROR: create {dotenv} with your API keys.", file=sys.stderr)
         sys.exit(1)
+
+    print(f"  Running [{yaml_path}]")
 
 
     # Import and run
