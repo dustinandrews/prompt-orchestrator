@@ -90,6 +90,30 @@ def cmd_init(args):
     shutil.copy2(runner_src, hidden_dir / "run_steps.py")
     print(f"  Created: ._agents_not_allowed/run_steps.py")
 
+    # Git init if not already a repo
+    if not (project_dir / ".git").exists():
+        subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
+        print(f"  Initialized git repo")
+
+    # Ensure .gitignore has *.log
+    gitignore = project_dir / ".gitignore"
+    existing = gitignore.read_text().splitlines() if gitignore.exists() else []
+    if "*.log" not in existing:
+        gitignore.write_text("\n".join(existing + ["", "*.log"]) if existing else "*.log\n")
+        print(f"  Added *.log to .gitignore")
+
+    # Commit initial state
+    subprocess.run(["git", "add", "-A"], cwd=project_dir, capture_output=True)
+    result = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=project_dir, capture_output=True, text=True
+    )
+    if result.stdout.strip():
+        subprocess.run(
+            ["git", "commit", "-m", "initial commit: scaffold orchestrator workflow"],
+            cwd=project_dir, capture_output=True
+        )
+        print(f"  Committed initial state")
+
     print(f"\nInitialized orchestrator in {project_dir}")
     print(f"  Run: prompt-orchestrator run")
 
@@ -179,10 +203,6 @@ def cmd_new(args):
     # Copy user spec
     shutil.copy2(spec_path, project_dir / "userspec.md")
     print(f"  Created: userspec.md")
-
-    # Init git
-    subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
-    print(f"  Initialized git repo")
 
     print(f"\nProject '{project_name}' created: {project_dir}")
     print(f"  cd {project_dir}")
