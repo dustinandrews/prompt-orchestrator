@@ -2,37 +2,57 @@
 
 ## Core Principles
 
-### I. Library-First
+### I. Lean Development
+
+Every feature, system, and abstraction MUST justify its existence:
+- **No bloat**: zero unused code, zero unused assets, zero unused
+  dependencies. Every file in the repo serves a current purpose.
+- **No overengineering**: solve today's problem, not next month's. The
+  simplest correct solution is the best solution. Do not add generic
+  interfaces, factory patterns, or dependency injection unless a second
+  concrete variant exists.
+- **No scope creep**: features are aggressively scoped to the minimal size
+  that delivers value. If a feature can be cut and the prototype still
+  validates the core mechanic, cut it.
+- **YAGNI (You Ain't Gonna Need It)**: if a feature, refactor, or abstraction
+  is not required by the current iteration, do not build it.
+- **Prefer deletion over addition**: when faced with a design problem, first
+  ask "what can I remove?" before "what can I add?"
+
+**Rationale**: A prototype's only goal is to validate an idea as quickly as
+possible. Every line of code that doesn't serve validation is dead weight.
+
+### II. Library-First
 
 Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries.
 
 **Rationale**: Modularity enables independent development, testing, and reuse across different contexts. Organizational-only libraries create unnecessary coupling and reduce maintainability.
 
-### II. CLI Interface
+### III. CLI Interface
 
 Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats.
 
 **Rationale**: CLI interfaces make libraries accessible to both humans and automation. Text protocols ensure debuggability and interoperability across environments.
 
-### III. Test-First (NON-NEGOTIABLE)
+### IV. Test-First (NON-NEGOTIABLE)
 
 TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced.
 
 **Rationale**: Test-first ensures requirements are understood before implementation, prevents over-engineering, and creates a safety net for refactoring. No exceptions for critical paths.
 
-### IV. Integration Testing
+### V. Integration Testing
 
 Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas.
 
 **Rationale**: Integration tests validate that components work together correctly. Critical for detecting breaking changes in contracts and ensuring system-level reliability.
 
-### V. Observability
+### VI. Observability
 
 Text I/O ensures debuggability; Structured logging required; MAJOR.MINOR.PATCH version format; Start simple, YAGNI principles.
 
 **Rationale**: Observable systems are maintainable systems. Semantic versioning communicates breaking changes clearly. Simplicity reduces cognitive load and maintenance burden.
 
-### VI. Python and preferred libraries first choice for backend implementation
+### VII. Python and preferred libraries first choice for backend implementation
 
 Primary backend stack: Python>=3.11, LiteLLM, SQLite, Pydantic v2, httpx instead of requests, rich for CLI polish, data transmission in JSON, user config file in simple key=val pairs or yaml, secret keys etc. go in key=val .env file.
 Every project should have a README.md with install instructions and brief examples of use. Typically; create a venv, install requirements, `pip install -e .`, executable --parameters.
@@ -41,31 +61,31 @@ Every project should have a README.md with install instructions and brief exampl
 
 **Rationale**: Using battle tested language and libraries ensures reliability. Re-use across projects increases maintainability. 
 
-### VII. Never Commit Secrets to Git
+### VIII. Never Commit Secrets to Git
 
 Secrets detection mandatory - scan before commit; .env files in .gitignore by default; Use environment variables or secure vaults; Rotate compromised credentials immediately.
 
 **Rationale**: Version control is forever - exposed secrets create permanent attack vectors. Proactive scanning prevents costly incident response and maintains trust boundaries.
 
-### VIII. MVP-Focus ship quick, fail fast, pivot early
+### IX. MVP-Focus ship quick, fail fast, pivot early
 
 Prove value before expanding; Ship working code in hours, not days; Explicit failure criteria defined upfront; Cut scope aggressively when `future proofing` creeps in.
 
 Rationale: Real usage validates assumptions faster than planning. Minimal scope prevents over-engineering and delivers tangible progress quickly. Failed experiments teach more than successful speculation. Slow is smooth and smooth is fast.
 
-### IX. Battle-Tested Over Build-From-Scratch
+### X. Battle-Tested Over Build-From-Scratch
 
 Prefer proven libraries with >1 year production history and active maintenance; MIT/Apache/BSD licenses only (no GPL/viral); Evaluate integration cost vs build cost honestly; Skip if library solves <70% of your requirements or needs heavy customization.
 
 **Rationale**: Mature libraries carry proven reliability and edge-case handling you haven't discovered yet. Time spent on domain-specific features beats rebuilding solved problems. Selective adoption prevents dependency bloat while accelerating delivery. Docker pull takes minutes if the container is right (or a couple more minutes to try and discard).
 
-### X. K.I.S.S principle
+### XI. K.I.S.S principle
 
 Never over-engineer. Unless otherwise specified consider all programs to be internal tools for engineering use. Keep it clean, strip off anything you don't need.
 
 **Rationale**: More stuff is more chances to get confused or break things. Less is more.
 
-### XI. One thing at a time
+### XII. One thing at a time
 
 Only plan and implement one feature at a time. If a user spec has more than one work item, pick the most core item not yet done. Finish that, come back for the rest later. Be ruthless about cutting and punting.
 
