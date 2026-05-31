@@ -368,3 +368,34 @@ Executing: /speckit.plan
 - File bug report with opencode/Crush for configurable compact threshold
 - Consider switching to different AI harness tool
 - Break up implement step to reduce context requirements
+
+---
+
+## Phase 16: Spec-kit Vestige Removal (2026-05-31)
+
+**Goal:** Strip all speckit/spec-kit references from code, config, tests, CI, and README. Prepare for making the project installable in existing codebases.
+
+### What Was Broken
+
+The command files on disk had been renamed from `speckit.*.md` to `orchestrator.*.md` at some point, but both `steps.yaml` files still referenced `speckit.*.md` paths. This meant any workflow run would fail with file-not-found on step one.
+
+### Changes Made
+
+**9 files modified across two commits:**
+
+1. **Fixed file path references** — Updated `.setup/steps.yaml` and `template/steps.yaml` to point at `orchestrator.*.md` (the actual filenames). 20 references total.
+
+2. **Fixed test expectations** — `tests/test_run_steps.py` and `.github/workflows/ci.yml` both checked for `speckit.specify.md`. Updated to match the actual filename.
+
+3. **Cleaned terminology** — All docstrings, descriptions, argparse help text, and README stripped of "speckit" and "spec-kit" references. Entry point renamed from `speckit-run` to `orchestrator-run`.
+
+4. **Left historical docs alone** — `docs/HANDOFF.md` and `docs/JOURNEY.md` retain their speckit references as project history.
+
+### Verification
+
+All 6 tests pass. Working tree clean.
+
+### Next
+
+Make the project installable in existing codebases. Currently it's a template-based new-project generator (`setup.py --project-name ...`). Needs a `prompt-orchestrator init` command that scaffolds `.orchestrator/` and config into a pre-existing repo.
+
