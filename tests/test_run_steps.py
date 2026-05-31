@@ -78,7 +78,6 @@ def test_cli_init_creates_scaffold():
         assert (project / ".orchestrator" / "command").is_dir()
         assert (project / ".orchestrator" / "templates").is_dir()
         assert (project / ".orchestrator" / "memory").is_dir()
-        assert (project / "steps.yaml").exists()
         assert (project / "._agents_not_allowed" / "steps.yaml").exists()
         assert (project / "._agents_not_allowed" / "run_steps.py").exists()
 
@@ -112,7 +111,7 @@ def test_cli_new_creates_project():
         project = Path(tmpdir) / "test-project"
         assert project.is_dir()
         assert (project / "userspec.md").exists()
-        assert (project / "steps.yaml").exists()
+        assert (project / "._agents_not_allowed" / "steps.yaml").exists()
         assert (project / "._agents_not_allowed" / "run_steps.py").exists()
         assert (project / ".orchestrator" / "command").is_dir()
 

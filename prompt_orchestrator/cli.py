@@ -63,30 +63,24 @@ def cmd_init(args):
         copy_tree(src, dst)
         print(f"  Created: {dst.relative_to(project_dir)}/")
 
-    # Create steps.yaml
+    # Create steps.yaml in ._agents_not_allowed/ only
+    hidden_dir = project_dir / "._agents_not_allowed"
+    hidden_dir.mkdir(exist_ok=True)
+
     steps_src = _package_dir().parent / "template" / "steps.yaml"
     if not steps_src.exists():
         steps_src = _scaffold_dir().parent.parent / "template" / "steps.yaml"
-    steps_dst = project_dir / "steps.yaml"
+    steps_dst = hidden_dir / "steps.yaml"
     if not steps_dst.exists() or args.force:
         project_name = project_dir.name
         content = steps_src.read_text().replace("{project_name}", project_name)
         steps_dst.write_text(content)
-        print(f"  Created: steps.yaml")
-    else:
-        print(f"  Skipped: steps.yaml (exists, use --force to overwrite)")
-
-    # Create ._agents_not_allowed/
-    hidden_dir = project_dir / "._agents_not_allowed"
-    hidden_dir.mkdir(exist_ok=True)
-
-    # Copy steps.yaml
-    shutil.copy2(steps_dst, hidden_dir / "steps.yaml")
+        print(f"  Created: ._agents_not_allowed/steps.yaml")
 
     # Copy runner
     runner_src = _package_dir() / "runner.py"
     shutil.copy2(runner_src, hidden_dir / "run_steps.py")
-    print(f"  Created: ._agents_not_allowed/")
+    print(f"  Created: ._agents_not_allowed/run_steps.py")
 
     print(f"\nInitialized orchestrator in {project_dir}")
     print(f"  Run: prompt-orchestrator run")
