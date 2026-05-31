@@ -548,26 +548,26 @@ def build_smolagents_prompt(
     return "\n".join(parts)
 
 
-def _create_smolagents_model():
-    """Auto-detect the best available model provider from environment."""
+def _create_smolagents_model(model_str: str | None = None):
+    """Create model from steps.yaml model string. No hardcoded fallback model."""
     import os
 
-    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
-    if openrouter_key:
-        return LiteLLMModel(
-            model_id="openrouter/google/gemini-2.0-flash-001",
-            api_key=openrouter_key,
-        )
+    if model_str:
+        if model_str.startswith("openrouter/"):
+            return LiteLLMModel(
+                model_id=model_str,
+                api_key=os.environ.get("OPENROUTER_API_KEY"),
+            )
+        return LiteLLMModel(model_id=model_str)
 
     hf_token = os.environ.get("HF_TOKEN")
     if hf_token:
         return InferenceClientModel(token=hf_token)
 
-    # Fallback — InferenceClientModel will try ~/.cache/huggingface/token
     return InferenceClientModel()
 
 
-def execute_smolagents(prompt: str) -> ExecutionResult:
+def execute_smolagents(prompt: str, model_str: str | None = None) -> ExecutionResult:
     """Execute prompt via smolagents CodeAgent and return pure result."""
     if not SMOLAGENTS_AVAILABLE:
         return ExecutionResult(
@@ -582,7 +582,7 @@ def execute_smolagents(prompt: str) -> ExecutionResult:
             SearchFilesTool,
         )
 
-        model = _create_smolagents_model()
+        model = _create_smolagents_model(model_str)
         agent = CodeAgent(
             tools=[ReadFileTool(), WriteFileTool(), SearchFilesTool()],
             model=model,
@@ -669,7 +669,7 @@ def run_workflow(
             print(f"Executing: {cmd.name} (smolagents)")
             if model:
                 print(f"  Model: {model}")
-            exec_result = execute_smolagents(prompt)
+            exec_result = execute_smolagents(prompt, model)
         else:
             opencode_cmd = build_opencode_cmd(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
