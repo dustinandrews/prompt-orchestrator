@@ -106,6 +106,9 @@ def cmd_run(args):
         print("ERROR: steps.yaml not found. Run 'prompt-orchestrator init' first.", file=sys.stderr)
         sys.exit(1)
 
+    print(f"  Running [{yaml_path}]")
+
+
     # Import and run
     sys.path.insert(0, str(_package_dir()))
     from prompt_orchestrator.runner import main as runner_main
