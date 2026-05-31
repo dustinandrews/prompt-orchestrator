@@ -15,6 +15,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 
 # ── Package paths ──────────────────────────────────────────────────────────
 
@@ -132,7 +134,7 @@ def cmd_run(args):
         print("ERROR: steps.yaml not found. Run 'prompt-orchestrator init' first.", file=sys.stderr)
         sys.exit(1)
 
-    # Require .env in project root (check before announcing run)
+    # Require and load .env in project root
     dotenv = project_dir / ".env"
     if not dotenv.exists():
         example = project_dir / ".env.example"
@@ -141,6 +143,7 @@ def cmd_run(args):
         else:
             print(f"ERROR: create {dotenv} with your API keys.", file=sys.stderr)
         sys.exit(1)
+    load_dotenv(dotenv)
 
     # Require userspec.md in project root
     userspec = project_dir / "userspec.md"
@@ -248,8 +251,8 @@ def main():
     # run
     run_p = sub.add_parser("run", help="Execute orchestrator workflow")
     run_p.add_argument("--step", "-s", type=int, default=None, metavar="N", help="Start at step N")
-    run_p.add_argument("--backend", default="opencode", choices=["opencode", "smolagents"],
-                       help="Execution backend (default: opencode)")
+    run_p.add_argument("--backend", default="smolagents", choices=["opencode", "smolagents"],
+                       help="Execution backend (default: smolagents)")
     run_p.add_argument("extra", nargs="*", help="Additional context for step N")
 
     # new
