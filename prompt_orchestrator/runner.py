@@ -22,7 +22,7 @@ except ImportError:
 
 try:
     from smolagents import CodeAgent, Tool
-    from smolagents.models import InferenceClientModel
+    from smolagents.models import InferenceClientModel, LiteLLMModel
     SMOLAGENTS_AVAILABLE = True
 except ImportError:
     SMOLAGENTS_AVAILABLE = False
@@ -548,6 +548,25 @@ def build_smolagents_prompt(
     return "\n".join(parts)
 
 
+def _create_smolagents_model():
+    """Auto-detect the best available model provider from environment."""
+    import os
+
+    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+    if openrouter_key:
+        return LiteLLMModel(
+            model_id="openrouter/anthropic/claude-3.5-sonnet",
+            api_key=openrouter_key,
+        )
+
+    hf_token = os.environ.get("HF_TOKEN")
+    if hf_token:
+        return InferenceClientModel(token=hf_token)
+
+    # Fallback — InferenceClientModel will try ~/.cache/huggingface/token
+    return InferenceClientModel()
+
+
 def execute_smolagents(prompt: str) -> ExecutionResult:
     """Execute prompt via smolagents CodeAgent and return pure result."""
     if not SMOLAGENTS_AVAILABLE:
@@ -563,7 +582,7 @@ def execute_smolagents(prompt: str) -> ExecutionResult:
             SearchFilesTool,
         )
 
-        model = InferenceClientModel()
+        model = _create_smolagents_model()
         agent = CodeAgent(
             tools=[ReadFileTool(), WriteFileTool(), SearchFilesTool()],
             model=model,

@@ -27,6 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+openrouter = ["litellm>=1.0"]
 
 [project.scripts]
 prompt-orchestrator = "prompt_orchestrator.cli:main"
