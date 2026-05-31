@@ -142,6 +142,25 @@ def cmd_run(args):
             print(f"ERROR: create {dotenv} with your API keys.", file=sys.stderr)
         sys.exit(1)
 
+    # Require userspec.md in project root
+    userspec = project_dir / "userspec.md"
+    if not userspec.exists():
+        print("ERROR: userspec.md not found.", file=sys.stderr)
+        print(file=sys.stderr)
+        print("  userspec.md is your project specification. It tells the AI what to build.", file=sys.stderr)
+        print("  It should be a short markdown file describing the program you want to create.", file=sys.stderr)
+        print(file=sys.stderr)
+        print("  Example:", file=sys.stderr)
+        print('  > Write a CLI program that retrieves URLs and writes contents to stdout.', file=sys.stderr)
+        print('  >', file=sys.stderr)
+        print('  > $ get-url --help', file=sys.stderr)
+        print('  > usage:', file=sys.stderr)
+        print('  > get-url <url>        retrieve the URL and write to stdout', file=sys.stderr)
+        print('  > get-url <url> -o <f> write to file as UTF-8', file=sys.stderr)
+        print(file=sys.stderr)
+        print("  Create one and run again.", file=sys.stderr)
+        sys.exit(1)
+
     print(f"  Running [{yaml_path}]")
 
 
