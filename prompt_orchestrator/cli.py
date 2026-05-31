@@ -172,6 +172,8 @@ def cmd_run(args):
     runner_args = ["--config", str(yaml_path)]
     if args.step:
         runner_args.extend(["--step", str(args.step)])
+    if args.backend:
+        runner_args.extend(["--backend", args.backend])
     runner_args.extend(args.extra)
 
     sys.argv = ["run_steps.py"] + runner_args
@@ -246,6 +248,8 @@ def main():
     # run
     run_p = sub.add_parser("run", help="Execute orchestrator workflow")
     run_p.add_argument("--step", "-s", type=int, default=None, metavar="N", help="Start at step N")
+    run_p.add_argument("--backend", default="opencode", choices=["opencode", "smolagents"],
+                       help="Execution backend (default: opencode)")
     run_p.add_argument("extra", nargs="*", help="Additional context for step N")
 
     # new

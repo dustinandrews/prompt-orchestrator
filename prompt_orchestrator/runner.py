@@ -20,6 +20,13 @@ except ImportError:
     print("Error: PyYAML required. Run: pip install pyyaml", file=sys.stderr)
     sys.exit(1)
 
+try:
+    from smolagents import CodeAgent, Tool
+    from smolagents.models import InferenceClientModel
+    SMOLAGENTS_AVAILABLE = True
+except ImportError:
+    SMOLAGENTS_AVAILABLE = False
+
 
 # ============================================================================
 # Pure Data Structures
@@ -45,6 +52,7 @@ class Config:
     max_retries: int
     models: dict
     commands: tuple
+    backend: str = "opencode"
 
 
 @dataclass(frozen=True)
@@ -504,6 +512,69 @@ def execute_opencode(cmd: list) -> ExecutionResult:
         return ExecutionResult(exit_code=1, error_msg=str(e))
 
 
+def build_smolagents_prompt(
+    command: str,
+    model: Optional[str],
+    files: tuple,
+    debug: bool,
+    base_message: str,
+    extra: tuple,
+    use_continue: bool = True
+) -> str:
+    """Assemble prompt from command files for smolagents CodeAgent.
+
+    Reads the same .md command files and templates as the opencode backend
+    and concatenates them into a single prompt string.
+    """
+    parts = []
+
+    if base_message:
+        parts.append(base_message)
+
+    if extra:
+        parts.append(" ".join(extra))
+
+    if use_continue:
+        parts.append("[CONTINUATION: This is a retry or continuation of a previous step.]")
+
+    for file_path in files:
+        try:
+            content = Path(file_path).read_text()
+            parts.append(f"\n--- {file_path} ---\n")
+            parts.append(content)
+        except Exception as e:
+            parts.append(f"\n[ERROR: Could not read {file_path}: {e}]\n")
+
+    return "\n".join(parts)
+
+
+def execute_smolagents(prompt: str) -> ExecutionResult:
+    """Execute prompt via smolagents CodeAgent and return pure result."""
+    if not SMOLAGENTS_AVAILABLE:
+        return ExecutionResult(
+            exit_code=1,
+            error_msg="smolagents not installed. Run: pip install smolagents"
+        )
+
+    try:
+        from prompt_orchestrator.smolagents_tools import (
+            ReadFileTool,
+            WriteFileTool,
+            SearchFilesTool,
+        )
+
+        model = InferenceClientModel()
+        agent = CodeAgent(
+            tools=[ReadFileTool(), WriteFileTool(), SearchFilesTool()],
+            model=model,
+            additional_authorized_imports=["pathlib", "os", "sys", "json", "re"],
+        )
+        agent.run(prompt)
+        return ExecutionResult(exit_code=0)
+    except Exception as e:
+        return ExecutionResult(exit_code=1, error_msg=str(e))
+
+
 # ============================================================================
 # Main Execution Loop
 # ============================================================================
@@ -515,6 +586,11 @@ def run_workflow(
     step_n_extra: Optional[list] = None
 ) -> None:
     """Execute workflow with functional state management."""
+
+    # Backend validation (FR-010)
+    if config.backend not in ("opencode", "smolagents"):
+        print(f"ERROR: Unknown backend '{config.backend}'. Valid options: opencode, smolagents", file=sys.stderr)
+        sys.exit(1)
 
     state = {
         'current_step': start_step,
@@ -531,6 +607,7 @@ def run_workflow(
     print(f"Feature directory: {feature_dir}")
     print(f"Defined models: {list(config.models.keys())}")
     print(f"Max retries per validation: {config.max_retries}")
+    print(f"Backend: {config.backend}")
 
     if start_step > 1:
         print(f"\nStarting at step {start_step}")
@@ -564,17 +641,26 @@ def run_workflow(
         )
         use_continue = not is_first
 
-        opencode_cmd = build_opencode_cmd(
-            cmd.name, model, cmd.files, config.debug, config.message, extra,
-            use_continue=use_continue
-        )
-
-        print(f"Executing: {cmd.name}")
-        if model:
-            print(f"  Model: {model}")
-        print(f"  Command: {' '.join(opencode_cmd[:10])}...")
-
-        exec_result = execute_opencode(opencode_cmd)
+        # Backend dispatch
+        if config.backend == "smolagents":
+            prompt = build_smolagents_prompt(
+                cmd.name, model, cmd.files, config.debug, config.message, extra,
+                use_continue=use_continue
+            )
+            print(f"Executing: {cmd.name} (smolagents)")
+            if model:
+                print(f"  Model: {model}")
+            exec_result = execute_smolagents(prompt)
+        else:
+            opencode_cmd = build_opencode_cmd(
+                cmd.name, model, cmd.files, config.debug, config.message, extra,
+                use_continue=use_continue
+            )
+            print(f"Executing: {cmd.name}")
+            if model:
+                print(f"  Model: {model}")
+            print(f"  Command: {' '.join(opencode_cmd[:10])}...")
+            exec_result = execute_opencode(opencode_cmd)
 
         # Run verification if configured
         verify_result = VerificationResult(success=True)
@@ -698,6 +784,12 @@ Examples:
         help="Path to steps.yaml (required)"
     )
     parser.add_argument(
+        "--backend",
+        default="opencode",
+        choices=["opencode", "smolagents"],
+        help="Execution backend (default: opencode)"
+    )
+    parser.add_argument(
         "extra",
         nargs="*",
         help="Additional context for step N only (e.g., error message)"
@@ -708,6 +800,17 @@ Examples:
     yaml_path = resolve_yaml_path(args.config)
     config = load_config(yaml_path)
     validate_start_step(args.step, len(config.commands))
+
+    # Merge backend into config
+    config = Config(
+        project_name=config.project_name,
+        debug=config.debug,
+        message=config.message,
+        max_retries=config.max_retries,
+        models=config.models,
+        commands=config.commands,
+        backend=args.backend,
+    )
 
     log_dir = get_log_dir(yaml_path)
     log_file = create_logger(log_dir)

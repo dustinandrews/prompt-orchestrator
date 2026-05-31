@@ -28,8 +28,8 @@ description: "Task list for smolagents backend implementation"
 
 **Purpose**: Project initialization and dependency management
 
-- [ ] T001 Add `smolagents>=1.17.0` to `dependencies` in `pyproject.toml`
-- [ ] T002 Install smolagents via `pip install smolagents` in the local venv
+- [x] T001 Add `smolagents>=1.17.0` to `dependencies` in `pyproject.toml`
+- [x] T002 Install smolagents via `pip install smolagents` in the local venv
 
 ---
 
@@ -39,10 +39,10 @@ description: "Task list for smolagents backend implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 [P] Add `--backend` argument to the `run` subcommand parser in `prompt_orchestrator/cli.py` with `default="opencode"` and `choices=["opencode", "smolagents"]`
-- [ ] T004 Add `backend: str = "opencode"` field to the `Config` dataclass in `prompt_orchestrator/runner.py`
-- [ ] T005 Thread `args.backend` from `cli.py` `cmd_run()` through to `runner.main()` and `run_workflow()` — pass as `backend` kwarg or extend `Config`
-- [ ] T006 Add backend validation in `run_workflow()`: error on unrecognized backend values (FR-010)
+- [x] T003 [P] Add `--backend` argument to the `run` subcommand parser in `prompt_orchestrator/cli.py` with `default="opencode"` and `choices=["opencode", "smolagents"]`
+- [x] T004 Add `backend: str = "opencode"` field to the `Config` dataclass in `prompt_orchestrator/runner.py`
+- [x] T005 Thread `args.backend` from `cli.py` `cmd_run()` through to `runner.main()` and `run_workflow()` — pass as `backend` kwarg or extend `Config`
+- [x] T006 Add backend validation in `run_workflow()`: error on unrecognized backend values (FR-010)
 
 **Checkpoint**: Foundation ready — CLI accepts `--backend`, Config carries it, backend dispatch point exists
 
@@ -56,17 +56,17 @@ description: "Task list for smolagents backend implementation"
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T007 [P] [US1] Test `build_smolagents_prompt()` reads same files as `build_opencode_cmd()` in `tests/test_run_steps.py`
+- [x] T007 [P] [US1] Test `build_smolagents_prompt()` reads same files as `build_opencode_cmd()` in `tests/test_run_steps.py`
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement `ReadFileTool` custom smolagents `Tool` class in new module `prompt_orchestrator/smolagents_tools.py` (file system read)
-- [ ] T009 [P] [US1] Implement `WriteFileTool` custom smolagents `Tool` class in `prompt_orchestrator/smolagents_tools.py` (file system write with parent dir creation)
-- [ ] T010 [P] [US1] Implement `SearchFilesTool` custom smolagents `Tool` class in `prompt_orchestrator/smolagents_tools.py` (glob-based file search)
-- [ ] T011 [US1] Implement `build_smolagents_prompt()` in `prompt_orchestrator/runner.py` — reads `cmd.files` tuple, concatenates content into single prompt string (same files as opencode)
-- [ ] T012 [US1] Implement `execute_smolagents()` in `prompt_orchestrator/runner.py` — creates `CodeAgent` with `InferenceClientModel` + file tools, calls `agent.run(prompt)`, wraps result in `ExecutionResult`
-- [ ] T013 [US1] Wire conditional dispatch in `run_workflow()`: replace `build_opencode_cmd`/`execute_opencode` block with `if config.backend == "smolagents"` branch calling `build_smolagens_prompt`/`execute_smolagens`, else existing opencode path
-- [ ] T014 [US1] Ensure `execute_smolagents()` uses `HF_TOKEN` from environment (research.md §4) — `InferenceClientModel` auto-reads this
+- [x] T008 [US1] Implement `ReadFileTool` custom smolagents `Tool` class in new module `prompt_orchestrator/smolagents_tools.py` (file system read)
+- [x] T009 [P] [US1] Implement `WriteFileTool` custom smolagents `Tool` class in `prompt_orchestrator/smolagents_tools.py` (file system write with parent dir creation)
+- [x] T010 [P] [US1] Implement `SearchFilesTool` custom smolagents `Tool` class in `prompt_orchestrator/smolagents_tools.py` (glob-based file search)
+- [x] T011 [US1] Implement `build_smolagents_prompt()` in `prompt_orchestrator/runner.py` — reads `cmd.files` tuple, concatenates content into single prompt string (same files as opencode)
+- [x] T012 [US1] Implement `execute_smolagents()` in `prompt_orchestrator/runner.py` — creates `CodeAgent` with `InferenceClientModel` + file tools, calls `agent.run(prompt)`, wraps result in `ExecutionResult`
+- [x] T013 [US1] Wire conditional dispatch in `run_workflow()`: replace `build_opencode_cmd`/`execute_opencode` block with `if config.backend == "smolagents"` branch calling `build_smolagens_prompt`/`execute_smolagens`, else existing opencode path
+- [x] T014 [US1] Ensure `execute_smolagents()` uses `HF_TOKEN` from environment (research.md §4) — `InferenceClientModel` auto-reads this
 
 **Checkpoint**: At this point, `--backend smolagents` should work end-to-end for the specify step
 
@@ -80,12 +80,12 @@ description: "Task list for smolagents backend implementation"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T015 [P] [US2] Test that `cmd_run()` defaults `backend` to `"opencode"` when `--backend` is omitted in `tests/test_run_steps.py`
-- [ ] T016 [US2] Test that `run_workflow()` with `backend="opencode"` follows the existing opencode code path (no regression) in `tests/test_run_steps.py`
+- [x] T015 [P] [US2] Test that `cmd_run()` defaults `backend` to `"opencode"` when `--backend` is omitted in `tests/test_run_steps.py`
+- [x] T016 [US2] Test that `run_workflow()` with `backend="opencode"` follows the existing opencode code path (no regression) in `tests/test_run_steps.py`
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Verify opencode dispatch path is completely unchanged when `config.backend == "opencode"` (or default) — the conditional must NOT affect opencode behavior
+- [x] T017 [US2] Verify opencode dispatch path is completely unchanged when `config.backend == "opencode"` (or default) — the conditional must NOT affect opencode behavior
 
 **Checkpoint**: Backward compatibility confirmed — opencode users see zero change
 
@@ -99,14 +99,14 @@ description: "Task list for smolagents backend implementation"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T018 [P] [US3] Test that `verify_files()` produces same result when run after smolagents vs opencode execution in `tests/test_run_steps.py`
-- [ ] T019 [US3] Test that `compute_retry_decision()` handles smolagens `ExecutionResult` identically to opencode's in `tests/test_run_steps.py`
-- [ ] T020 [US3] Test that invalid `--backend` value produces error listing valid options (FR-010) in `tests/test_run_steps.py`
-- [ ] T021 [US3] Test that smolagens error produces `ExecutionResult(exit_code=1, error_msg=...)` matching the opencode error contract in `tests/test_run_steps.py`
+- [x] T018 [P] [US3] Test that `verify_files()` produces same result when run after smolagents vs opencode execution in `tests/test_run_steps.py`
+- [x] T019 [US3] Test that `compute_retry_decision()` handles smolagens `ExecutionResult` identically to opencode's in `tests/test_run_steps.py`
+- [x] T020 [US3] Test that invalid `--backend` value produces error listing valid options (FR-010) in `tests/test_run_steps.py`
+- [x] T021 [US3] Test that smolagens error produces `ExecutionResult(exit_code=1, error_msg=...)` matching the opencode error contract in `tests/test_run_steps.py`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Handle smolagents `ExecutionResult` in review file hash tracking — verify hashing works for smolagent-generated files (no change needed if `compute_file_hash` is backend-agnostic, which it is)
+- [x] T022 [US3] Handle smolagents `ExecutionResult` in review file hash tracking — verify hashing works for smolagent-generated files (no change needed if `compute_file_hash` is backend-agnostic, which it is)
 
 **Checkpoint**: Smolagents backend is fully integrated with verification, retry, and error handling
 
@@ -116,11 +116,11 @@ description: "Task list for smolagents backend implementation"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T023 [P] Run `pip install -e .` to verify pyproject.toml dependency resolution works with new smolagents dependency
-- [ ] T024 Run quickstart.md smoke tests: `prompt-orchestrator run --backend smolagents --step 1`
-- [ ] T025 Run full test suite: `python -m pytest tests/` — all existing tests must pass (SC-003)
-- [ ] T026 Run full workflow smoke test: `prompt-orchestrator run --backend smolagents` (SC-002)
-- [ ] T027 Update `AGENTS.md` SPECKIT section to reference the implementation plan if needed
+- [x] T023 [P] Run `pip install -e .` to verify pyproject.toml dependency resolution works with new smolagents dependency
+- [ ] T024 Run quickstart.md smoke tests: `prompt-orchestrator run --backend smolagents --step 1` (requires HF_TOKEN)
+- [x] T025 Run full test suite: `python -m pytest tests/` — all existing tests must pass (SC-003)
+- [ ] T026 Run full workflow smoke test: `prompt-orchestrator run --backend smolagents` (requires HF_TOKEN)
+- [x] T027 Update `AGENTS.md` SPECKIT section to reference the implementation plan if needed
 
 ---
 
