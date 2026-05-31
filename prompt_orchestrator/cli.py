@@ -63,6 +63,14 @@ def cmd_init(args):
         copy_tree(src, dst)
         print(f"  Created: {dst.relative_to(project_dir)}/")
 
+    # Copy .env.example to project root
+    env_example_src = _scaffold_dir() / ".env.example"
+    if env_example_src.exists():
+        env_example_dst = project_dir / ".env.example"
+        if not env_example_dst.exists() or args.force:
+            shutil.copy2(env_example_src, env_example_dst)
+            print(f"  Created: .env.example")
+
     # Create steps.yaml in ._agents_not_allowed/ only
     hidden_dir = project_dir / "._agents_not_allowed"
     hidden_dir.mkdir(exist_ok=True)
