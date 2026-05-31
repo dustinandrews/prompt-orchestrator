@@ -102,6 +102,16 @@ def cmd_run(args):
 
     print(f"  Running [{yaml_path}]")
 
+    # Require .env in project root
+    dotenv = project_dir / ".env"
+    if not dotenv.exists():
+        example = project_dir / ".env.example"
+        if example.exists():
+            print(f"ERROR: copy {example} to {dotenv} and configure with needed API keys.", file=sys.stderr)
+        else:
+            print(f"ERROR: create {dotenv} with your API keys.", file=sys.stderr)
+        sys.exit(1)
+
 
     # Import and run
     sys.path.insert(0, str(_package_dir()))
