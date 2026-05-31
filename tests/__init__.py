@@ -1,1 +1,1 @@
-"""Basic tests for speckit-orchestrator setup and config."""
+"""Basic tests for prompt-orchestrator setup and config."""

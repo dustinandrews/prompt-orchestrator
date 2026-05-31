@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "prompt-orchestrator"
 version = "0.1.0"
-description = "Automated speckit workflow executor with review gates"
+description = "Automated workflow executor with review gates for AI coding agents"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.12"
@@ -23,7 +23,7 @@ classifiers = [
 dev = ["pytest"]
 
 [project.scripts]
-speckit-run = "run_steps:main"
+orchestrator-run = "run_steps:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

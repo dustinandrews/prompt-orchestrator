@@ -31,7 +31,7 @@ jobs:
           import os
           required = [
             'template/.orchestrator/templates/spec-template.md',
-            'template/.orchestrator/command/speckit.specify.md',
+            'template/.orchestrator/command/orchestrator.specify.md',
             '.setup/steps.yaml',
             '.setup/setup.py'
           ]

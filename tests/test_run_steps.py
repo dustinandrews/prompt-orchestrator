@@ -36,7 +36,7 @@ def test_required_template_files():
     """Verify all required template files exist."""
     required = [
         "template/.orchestrator/templates/spec-template.md",
-        "template/.orchestrator/command/speckit.specify.md",
+        "template/.orchestrator/command/orchestrator.specify.md",
     ]
     missing = [f for f in required if not Path(f).exists()]
     assert not missing, f"Missing files: {missing}"

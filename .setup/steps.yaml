@@ -1,4 +1,4 @@
-description: This is a definition of the steps for the speckit process. It is proccessed by a script. **DO NOT** attempt to execute this manually.
+description: This is a definition of the steps for the orchestrator workflow. It is proccessed by a script. **DO NOT** attempt to execute this manually.
 title: {project_name}
 debug: true # true/false (enables --debug flag)
 message: K.I.S.S. DO NOT ask clarifying questions. Make decisions and proceed.

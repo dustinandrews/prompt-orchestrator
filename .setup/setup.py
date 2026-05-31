@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for speckit-orchestrator projects.
+Setup script for prompt-orchestrator projects.
 
 Creates a new project from the template and prepares skeleton.
 
@@ -76,7 +76,7 @@ def copy_spec_file(project_dir: Path, spec_path: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Setup a new speckit-orchestrator project"
+        description="Setup a new prompt-orchestrator project"
     )
     parser.add_argument(
         "--project-name",

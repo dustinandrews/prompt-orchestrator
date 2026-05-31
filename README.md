@@ -3,11 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-Automated speckit workflow executor with review gates.
+Automated prompt orchestration workflow executor with review gates.
 
 ## What
 
-Runs the [speckit](https://github.com/dustinandrews/speckit) code generation workflow unattended, powered by [opencode](https://github.com/opencode-ai/opencode) as the AI harness:
+Runs a multi-step code generation workflow unattended, powered by [opencode](https://github.com/opencode-ai/opencode) as the AI harness:
 - Specify → Review → Plan → Review → Tasks → Review → Implement → Test Review → Product Review
 
 Each step verified before proceeding. Review files protected by hash-based tamper detection to prevent later steps from re-doing reviews.
@@ -15,7 +15,6 @@ Each step verified before proceeding. Review files protected by hash-based tampe
 ## Prerequisites
 
 - [opencode](https://github.com/opencode-ai/opencode) - AI coding agent
-- optional: [speckit](https://github.com/dustinandrews/speckit) - Coding template library
 - Some kind of API key or Ollama. This will work with Qwen3.5 on Ollama.
 - Best results with more powerful coding models like deepseek-v3.2
 - Python 3.12+
@@ -51,9 +50,9 @@ python3 ._agents_not_allowed/run_steps.py --config ._agents_not_allowed/steps.ya
 
 ## Features
 
-- **Automated workflow** - 14-step speckit process runs unattended
+- **Automated workflow** - Multi-step process runs unattended
 - **Review gates** - Each step verified before proceeding
-- **Expanded commands** - 14 speckit commands with review steps built in (vs original 9)
+- **Expanded commands** - 14 commands with review steps built in
 - **Streamlined templates** - Simplified review templates, single STATUS field at end
 - **Tamper detection** - Review files protected from modification
 - **Retry logic** - Automatic retry on failure with context preservation
@@ -115,7 +114,7 @@ template/            # Template files (copied to each new project)
 │   ├── templates/   # Review templates
 │   └── memory/      # Constitution and rules
 ├── .opencode/
-│   └── command/     # speckit command definitions
+│   └── command/     # Orchestrator command definitions
 ├── project/         # Skeleton scaffold
 └── steps.yaml       # Workflow definition
 

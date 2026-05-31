@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Execute speckit workflow from steps.yaml.
+Execute orchestrator workflow from steps.yaml.
 
 Functional-style workflow executor with immutable state transitions.
 """
@@ -674,7 +674,7 @@ def validate_start_step(start_step: int, num_commands: int) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Execute speckit workflow from steps.yaml",
+        description="Execute orchestrator workflow from steps.yaml",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
