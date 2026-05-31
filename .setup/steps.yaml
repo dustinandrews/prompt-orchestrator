@@ -18,7 +18,7 @@ commands:
   - step: specify
     model: reviewer-model
     files:
-      - .orchestrator/command/speckit.specify.md
+      - .orchestrator/command/orchestrator.specify.md
       - .orchestrator/templates/spec-template.md
       - userspec.md
     verify:
@@ -29,7 +29,7 @@ commands:
   - step: spec-review
     model: reviewer-model
     files:
-      - .orchestrator/command/speckit.spec-review.md
+      - .orchestrator/command/orchestrator.spec-review.md
       - .orchestrator/templates/spec-review-template.md
     verify:
       files:
@@ -40,7 +40,7 @@ commands:
   - step: plan
     model: coder-model
     files:
-      - .orchestrator/command/speckit.plan.md
+      - .orchestrator/command/orchestrator.plan.md
       - .orchestrator/templates/plan-template.md
     verify:
       files:
@@ -50,7 +50,7 @@ commands:
   - step: plan-review
     model: reviewer-model
     files:
-      - .orchestrator/command/speckit.plan-review.md
+      - .orchestrator/command/orchestrator.plan-review.md
       - .orchestrator/templates/plan-review-template.md
     verify:
       files:
@@ -61,7 +61,7 @@ commands:
   - step: tasks
     model: coder-model
     files:
-      - .orchestrator/command/speckit.tasks.md
+      - .orchestrator/command/orchestrator.tasks.md
       - .orchestrator/templates/tasks-template.md
     verify:
       files:
@@ -71,12 +71,12 @@ commands:
   - step: analyze
     model: coder-model
     files:
-      - .orchestrator/command/speckit.analyze.md
+      - .orchestrator/command/orchestrator.analyze.md
 
   - step: tasks-review
     model: reviewer-model
     files:
-      - .orchestrator/command/speckit.tasks-review.md
+      - .orchestrator/command/orchestrator.tasks-review.md
       - .orchestrator/templates/tasks-review-template.md
     verify:
       files:
@@ -87,14 +87,14 @@ commands:
   - step: implement
     model: coder-model
     files:
-      - .orchestrator/command/speckit.implement.md
+      - .orchestrator/command/orchestrator.implement.md
     verify_implementation: true
     retry_step_on_fail: implement
 
   - step: test-review
     model: reviewer-model
     files:
-      - .orchestrator/command/speckit.test-review.md
+      - .orchestrator/command/orchestrator.test-review.md
       - .orchestrator/templates/test-review-template.md
     verify:
       files:
@@ -105,7 +105,7 @@ commands:
   - step: product-review
     model: reviewer-model
     files:
-      - .orchestrator/command/speckit.product-review.md
+      - .orchestrator/command/orchestrator.product-review.md
       - .orchestrator/templates/product-review-template.md
     verify:
       files:
