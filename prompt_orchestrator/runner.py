@@ -555,7 +555,7 @@ def _create_smolagents_model():
     openrouter_key = os.environ.get("OPENROUTER_API_KEY")
     if openrouter_key:
         return LiteLLMModel(
-            model_id="openrouter/anthropic/claude-3.5-sonnet",
+            model_id="openrouter/google/gemini-2.0-flash-001",
             api_key=openrouter_key,
         )
 

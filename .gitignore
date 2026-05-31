@@ -38,3 +38,6 @@ Thumbs.db
 .opencode/
 .specify/
 AGENTS.md
+
+# Secrets
+.env
