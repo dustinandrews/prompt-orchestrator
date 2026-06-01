@@ -73,6 +73,14 @@ def cmd_init(args):
         copy_tree(src, dst)
         print(f"  Created: {dst.relative_to(project_dir)}/")
 
+    # Create .setup/run_steps.py from template
+    setup_src = _package_dir().parent / "template" / ".setup" / "run_steps.py"
+    if setup_src.exists():
+        setup_dst = project_dir / ".setup"
+        setup_dst.mkdir(exist_ok=True)
+        shutil.copy2(setup_src, setup_dst / "run_steps.py")
+        print(f"  Created: .setup/run_steps.py")
+
     # Create steps.yaml in ._agents_not_allowed/ only
     hidden_dir = project_dir / "._agents_not_allowed"
     hidden_dir.mkdir(exist_ok=True)

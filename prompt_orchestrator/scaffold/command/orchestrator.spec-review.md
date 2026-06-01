@@ -5,7 +5,7 @@ directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.spec-review.
 
 ## COMMAND: SPEC REVIEW
 
-Fill out `.specify/templates/spec-review-template.md` and write to `specs/XXX-feature/spec-review.md`.
+Fill out `.orchestrator/templates/spec-review-template.md` and write to `specs/XXX-feature/spec-review.md`.
 
 **Requires**: `specs/XXX-feature/spec.md` exists.
 

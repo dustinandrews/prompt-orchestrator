@@ -5,7 +5,7 @@ directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.tasks.
 
 ## COMMAND: TASKS
 
-Fill out `.specify/templates/tasks-template.md` and write to `specs/XXX-feature/tasks.md`.
+Fill out `.orchestrator/templates/tasks-template.md` and write to `specs/XXX-feature/tasks.md`.
 
 **Requires**: `specs/XXX-feature/plan.md` and `specs/XXX-feature/plan-review.md` with `STATUS: PASS`.
 

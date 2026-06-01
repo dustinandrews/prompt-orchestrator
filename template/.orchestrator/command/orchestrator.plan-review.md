@@ -5,7 +5,7 @@ directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.plan-review.
 
 ## COMMAND: PLAN REVIEW
 
-Fill out `.specify/templates/plan-review-template.md` and write to `specs/XXX-feature/plan-review.md`.
+Fill out `.orchestrator/templates/plan-review-template.md` and write to `specs/XXX-feature/plan-review.md`.
 
 **Requires**: `specs/XXX-feature/plan.md` and `specs/XXX-feature/spec-review.md` with `STATUS: PASS`.
 

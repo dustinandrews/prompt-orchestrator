@@ -5,7 +5,7 @@ directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.product-review.
 
 ## COMMAND: PRODUCT REVIEW
 
-Fill out `.specify/templates/product-review-template.md` and write to `specs/XXX-feature/product-review.md`.
+Fill out `.orchestrator/templates/product-review-template.md` and write to `specs/XXX-feature/product-review.md`.
 
 **Requires**: `specs/XXX-feature/test-review.md` with `STATUS: PASS`.
 
