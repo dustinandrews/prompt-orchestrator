@@ -52,7 +52,7 @@ class Config:
     max_retries: int
     models: dict
     commands: tuple
-    backend: str = "opencode"
+    backend: str = "smolagents"
 
 
 @dataclass(frozen=True)
@@ -804,9 +804,9 @@ Examples:
     )
     parser.add_argument(
         "--backend",
-        default="opencode",
+        default="smolagents",
         choices=["opencode", "smolagents"],
-        help="Execution backend (default: opencode)"
+        help="Execution backend (default: smolagents)"
     )
     parser.add_argument(
         "extra",

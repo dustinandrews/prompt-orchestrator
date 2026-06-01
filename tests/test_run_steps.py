@@ -172,7 +172,7 @@ def test_config_has_backend_field():
         models={},
         commands=(),
     )
-    assert config.backend == "opencode"
+    assert config.backend == "smolagents"
 
     config_smol = Config(
         project_name="test",
