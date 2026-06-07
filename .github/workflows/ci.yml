@@ -48,8 +48,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install python-dotenv pyyaml pytest -q
-          pip install -e . -q
+          pip install -e ".[dev]" -q
       
       - name: Run tests
         run: python -m pytest tests/ -v
