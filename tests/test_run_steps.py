@@ -220,6 +220,7 @@ def test_invalid_backend_error():
 
 def test_smolagents_tools_exist():
     """Verify smolagents file tools are importable and have correct attributes."""
+    smolagents = pytest.importorskip("smolagents")
     from prompt_orchestrator.smolagents_tools import ReadFileTool, WriteFileTool, SearchFilesTool
 
     read_tool = ReadFileTool()
@@ -234,6 +235,7 @@ def test_smolagents_tools_exist():
 
 def test_smolagents_tools_functional():
     """Verify smolagents file tools perform actual filesystem operations."""
+    smolagents = pytest.importorskip("smolagents")
     from prompt_orchestrator.smolagents_tools import ReadFileTool, WriteFileTool, SearchFilesTool
 
     with tempfile.TemporaryDirectory() as tmpdir:
