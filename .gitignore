@@ -41,3 +41,5 @@ AGENTS.md
 
 # Secrets
 .env
+
+*.log
