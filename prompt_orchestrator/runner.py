@@ -184,11 +184,13 @@ def find_feature_dir(base_dir: Path) -> Optional[Path]:
 # Pure Functions: Verification Logic
 # ============================================================================
 
-def check_review_status(content: str) -> VerificationResult:
+def check_review_status(content: str, log_file: Path = None) -> VerificationResult:
     """Parse review content for PASS/FAIL marker."""
+    write_log(log_file, "[CHECK] Parsing review status from content")
     match = re.search(r'^STATUS:\s*(PASS|FAIL)', content, re.MULTILINE | re.IGNORECASE)
 
     if not match:
+        write_log(log_file, "[CHECK] No STATUS marker found")
         return VerificationResult(
             success=False,
             error_type="review_fail",
@@ -196,12 +198,14 @@ def check_review_status(content: str) -> VerificationResult:
         )
 
     status = match.group(1).upper()
+    write_log(log_file, f"[CHECK] Found STATUS: {status}")
 
     if status == "PASS":
         return VerificationResult(success=True)
 
     reason_match = re.search(r'^If FAIL:\s*(.+)$', content, re.MULTILINE | re.IGNORECASE)
     reason = reason_match.group(1) if reason_match else "Review marked as FAIL"
+    write_log(log_file, f"[CHECK] FAIL reason: {reason}")
 
     return VerificationResult(
         success=False,
@@ -210,8 +214,12 @@ def check_review_status(content: str) -> VerificationResult:
     )
 
 
-def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict = None) -> VerificationResult:
+def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict = None, log_file: Path = None) -> VerificationResult:
     """Verify all required files exist and pass review checks."""
+    write_log(log_file, "[VERIFY] Starting file verification")
+    write_log(log_file, f"[VERIFY] Feature directory: {feature_dir}")
+    write_log(log_file, f"[VERIFY] Files to check: {list(files)}")
+
     if review_hashes is None:
         review_hashes = {}
 
@@ -220,11 +228,13 @@ def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict 
     if not files:
         print("No files to verify")
         print("======= PASS =======\n")
+        write_log(log_file, "[VERIFY] No files to verify - PASS")
         return VerificationResult(success=True)
 
     if not feature_dir:
         print(f"Feature directory: NOT FOUND")
         print("======= FAIL =======\n")
+        write_log(log_file, "[VERIFY] FAIL: No feature directory found in specs/")
         return VerificationResult(
             success=False,
             error_type="file_not_found",
@@ -240,9 +250,11 @@ def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict 
         exists = full_path.exists()
         status = "FOUND" if exists else "NOT FOUND"
         print(f"  {file_path}: {status}")
+        write_log(log_file, f"[VERIFY] {file_path}: {status}")
 
         if not exists:
             print(f"\n======= FAIL =======\n")
+            write_log(log_file, f"[VERIFY] FAIL: Missing {feature_dir}/{file_path}")
             return VerificationResult(
                 success=False,
                 error_type="file_not_found",
@@ -252,15 +264,18 @@ def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict 
         if file_path.endswith('-review.md'):
             try:
                 content = full_path.read_text()
-                review_result = check_review_status(content)
+                review_result = check_review_status(content, log_file)
                 review_status = "PASS" if review_result.success else "FAIL"
                 print(f"    Review status: {review_status}")
+                write_log(log_file, f"[VERIFY] {file_path} review status: {review_status}")
 
                 # Track hash for tamper detection
                 review_hashes[file_path] = compute_file_hash(full_path)
+                write_log(log_file, f"[VERIFY] {file_path} hash: {review_hashes[file_path]}")
 
                 if not review_result.success:
                     print(f"\n======= FAIL =======\n")
+                    write_log(log_file, f"[VERIFY] FAIL: {file_path}: {review_result.message}")
                     return VerificationResult(
                         success=False,
                         error_type="review_fail",
@@ -268,6 +283,7 @@ def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict 
                     )
             except Exception as e:
                 print(f"    Review status: ERROR - {e}")
+                write_log(log_file, f"[VERIFY] ERROR reading {file_path}: {e}")
                 print(f"\n======= FAIL =======\n")
                 return VerificationResult(
                     success=False,
@@ -276,6 +292,7 @@ def verify_files(feature_dir: Optional[Path], files: tuple, review_hashes: dict 
                 )
 
     print(f"\n======= PASS =======\n")
+    write_log(log_file, "[VERIFY] All checks passed")
     return VerificationResult(success=True)
 
 
@@ -307,8 +324,9 @@ def scan_directory_for_placeholders(dir_path: Path) -> list:
     return found
 
 
-def verify_implementation(base_dir: Path) -> VerificationResult:
+def verify_implementation(base_dir: Path, log_file: Path = None) -> VerificationResult:
     """Check implementation directories for placeholders."""
+    write_log(log_file, "[VERIFY_IMPL] Starting implementation verification")
     print(f"\n======= VERIFYING IMPLEMENTATION =======")
 
     impl_dirs = ["src", "tests"]
@@ -319,9 +337,11 @@ def verify_implementation(base_dir: Path) -> VerificationResult:
         exists = dir_path.exists()
         status = "FOUND" if exists else "NOT FOUND"
         print(f"  Directory {dir_name}/: {status}")
+        write_log(log_file, f"[VERIFY_IMPL] Directory {dir_name}/: {status}")
 
         if not exists:
             print(f"\n======= FAIL =======\n")
+            write_log(log_file, f"[VERIFY_IMPL] FAIL: Directory missing: {dir_name}")
             return VerificationResult(
                 success=False,
                 error_type="implementation",
@@ -329,14 +349,17 @@ def verify_implementation(base_dir: Path) -> VerificationResult:
             )
 
         placeholders = scan_directory_for_placeholders(dir_path)
+        write_log(log_file, f"[VERIFY_IMPL] Scanned {dir_name}/ for placeholders: {len(placeholders)} found")
         if placeholders:
             print(f"    Placeholders found in:")
             for p in placeholders:
                 print(f"      - {p}")
+                write_log(log_file, f"[VERIFY_IMPL]   Placeholder: {p}")
         all_placeholders.extend(placeholders)
 
     if all_placeholders:
         print(f"\n======= FAIL =======\n")
+        write_log(log_file, f"[VERIFY_IMPL] FAIL: Placeholders found in: {', '.join(all_placeholders)}")
         return VerificationResult(
             success=False,
             error_type="implementation",
@@ -344,6 +367,7 @@ def verify_implementation(base_dir: Path) -> VerificationResult:
         )
 
     print(f"\n======= PASS =======\n")
+    write_log(log_file, "[VERIFY_IMPL] All checks passed - no placeholders found")
     return VerificationResult(success=True)
 
 
@@ -433,10 +457,11 @@ def compute_retry_decision(
 # I/O Functions: Side Effects Isolated
 # ============================================================================
 
-def write_log(log_file: Path, message: str) -> None:
-    """Append message to log file."""
+def write_log(log_file: Path, message: str, timestamp: bool = True) -> None:
+    """Append message to log file with optional timestamp."""
+    prefix = f"[{datetime.now().isoformat()}] " if timestamp else ""
     with open(log_file, 'a') as f:
-        f.write(message + "\n")
+        f.write(f"{prefix}{message}\n")
 
 
 def create_logger(log_dir: Path) -> Path:
@@ -503,12 +528,23 @@ def build_opencode_cmd(
     return cmd
 
 
-def execute_opencode(cmd: list) -> ExecutionResult:
-    """Execute opencode command and return pure result."""
+def execute_opencode(cmd: list, log_file: Path = None) -> ExecutionResult:
+    """Execute opencode command, capture output, and return pure result."""
+    write_log(log_file, f"[EXEC] Command: {' '.join(cmd)}")
     try:
-        result = subprocess.run(cmd, capture_output=False, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.stdout:
+            write_log(log_file, "[STDOUT] ---")
+            for line in result.stdout.split('\n'):
+                write_log(log_file, f"[STDOUT] {line}")
+        if result.stderr:
+            write_log(log_file, "[STDERR] ---")
+            for line in result.stderr.split('\n'):
+                write_log(log_file, f"[STDERR] {line}")
+        write_log(log_file, f"[EXEC] Exit code: {result.returncode}")
         return ExecutionResult(exit_code=result.returncode)
     except Exception as e:
+        write_log(log_file, f"[EXEC] Exception: {e}")
         return ExecutionResult(exit_code=1, error_msg=str(e))
 
 
@@ -576,13 +612,18 @@ def _create_smolagents_model(model_str: str | None = None):
     return InferenceClientModel()
 
 
-def execute_smolagents(prompt: str, model_str: str | None = None) -> ExecutionResult:
+def execute_smolagents(prompt: str, model_str: str | None = None, log_file: Path = None) -> ExecutionResult:
     """Execute prompt via smolagents CodeAgent and return pure result."""
+    write_log(log_file, f"[SMOLAGENTS] Model: {model_str or 'default'}")
+    write_log(log_file, f"[SMOLAGENTS] Prompt length: {len(prompt)} chars")
+    write_log(log_file, "[SMOLAGENTS] Prompt ---")
+    for line in prompt.split('\n'):
+        write_log(log_file, f"[SMOLAGENTS] {line}")
+    
     if not SMOLAGENTS_AVAILABLE:
-        return ExecutionResult(
-            exit_code=1,
-            error_msg="smolagents not installed. Run: pip install smolagents"
-        )
+        err_msg = "smolagents not installed. Run: pip install smolagents"
+        write_log(log_file, f"[SMOLAGENTS] ERROR: {err_msg}")
+        return ExecutionResult(exit_code=1, error_msg=err_msg)
 
     try:
         from prompt_orchestrator.smolagents_tools import (
@@ -597,10 +638,18 @@ def execute_smolagents(prompt: str, model_str: str | None = None) -> ExecutionRe
             model=model,
             additional_authorized_imports=["pathlib", "os", "sys", "json", "re"],
         )
-        agent.run(prompt)
+        write_log(log_file, "[SMOLAGENTS] Starting agent execution...")
+        result = agent.run(prompt)
+        write_log(log_file, f"[SMOLAGENTS] Result: {result}")
+        write_log(log_file, "[SMOLAGENTS] Exit code: 0")
         return ExecutionResult(exit_code=0)
     except Exception as e:
-        return ExecutionResult(exit_code=1, error_msg=str(e))
+        import traceback
+        error_msg = str(e)
+        tb = traceback.format_exc()
+        write_log(log_file, f"[SMOLAGENTS] Exception: {error_msg}")
+        write_log(log_file, f"[SMOLAGENTS] Traceback:\n{tb}")
+        return ExecutionResult(exit_code=1, error_msg=error_msg)
 
 
 # ============================================================================
@@ -631,6 +680,16 @@ def run_workflow(
     project_root = log_file.parent.parent  # Go up from ._agents_not_allowed/
     feature_dir = find_feature_dir(project_root)
 
+    # Log initialization details
+    write_log(log_file, f"[INIT] Project: {config.project_name}")
+    write_log(log_file, f"[INIT] Commands: {len(config.commands)}")
+    write_log(log_file, f"[INIT] Models: {list(config.models.keys())}")
+    write_log(log_file, f"[INIT] Backend: {config.backend}")
+    write_log(log_file, f"[INIT] Max retries: {config.max_retries}")
+    write_log(log_file, f"[INIT] Project root: {project_root}")
+    write_log(log_file, f"[INIT] Feature directory: {feature_dir}")
+    write_log(log_file, f"[INIT] Start step: {start_step}")
+
     print(f"Loaded {len(config.commands)} commands for: {config.project_name}")
     print(f"Feature directory: {feature_dir}")
     print(f"Defined models: {list(config.models.keys())}")
@@ -639,6 +698,7 @@ def run_workflow(
 
     if start_step > 1:
         print(f"\nStarting at step {start_step}")
+        write_log(log_file, f"[INIT] Starting at step {start_step} (not from beginning)")
 
     while state['current_step'] <= len(config.commands):
         step_num = state['current_step']
@@ -670,6 +730,8 @@ def run_workflow(
         use_continue = not is_first
 
         # Backend dispatch
+        write_log(log_file, f"[WORKFLOW] Backend: {config.backend}")
+        write_log(log_file, f"[WORKFLOW] Model resolved: {model}")
         if config.backend == "smolagents":
             prompt = build_smolagents_prompt(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
@@ -678,7 +740,7 @@ def run_workflow(
             print(f"Executing: {cmd.name} (smolagents)")
             if model:
                 print(f"  Model: {model}")
-            exec_result = execute_smolagents(prompt, model)
+            exec_result = execute_smolagents(prompt, model, log_file)
         else:
             opencode_cmd = build_opencode_cmd(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
@@ -688,39 +750,46 @@ def run_workflow(
             if model:
                 print(f"  Model: {model}")
             print(f"  Command: {' '.join(opencode_cmd[:10])}...")
-            exec_result = execute_opencode(opencode_cmd)
+            exec_result = execute_opencode(opencode_cmd, log_file)
 
         # Run verification if configured
         verify_result = VerificationResult(success=True)
 
         if exec_result.exit_code == 0 and cmd.verify_implementation:
-            verify_result = verify_implementation(project_root)
+            write_log(log_file, "[WORKFLOW] Running implementation verification")
+            verify_result = verify_implementation(project_root, log_file)
 
         if exec_result.exit_code == 0 and cmd.verify and verify_result.success:
             # Re-check feature dir in case it was just created
             current_feature_dir = find_feature_dir(project_root)
+            write_log(log_file, f"[WORKFLOW] Re-checking feature dir: {current_feature_dir}")
             files_to_check = tuple(cmd.verify.get("files", []))
             step_review_hashes = {}
-            verify_result = verify_files(current_feature_dir, files_to_check, step_review_hashes)
+            verify_result = verify_files(current_feature_dir, files_to_check, step_review_hashes, log_file)
 
             # Save hashes for tamper detection
             if step_review_hashes:
                 state['verified_review_hashes'][step_num] = step_review_hashes
+                write_log(log_file, f"[WORKFLOW] Saved review hashes for step {step_num}")
 
         # Check for review file tampering before proceeding
+        write_log(log_file, "[WORKFLOW] Checking for review file tampering")
         for prev_step, prev_hashes in state['verified_review_hashes'].items():
             for filename, old_hash in prev_hashes.items():
                 review_path = current_feature_dir / filename if current_feature_dir else None
                 if review_path and review_path.exists():
                     current_hash = compute_file_hash(review_path)
+                    write_log(log_file, f"[TAMPER_CHECK] Step {prev_step} file {filename}: old={old_hash[:8]}..., new={current_hash[:8]}...")
                     if current_hash != old_hash:
                         print(f"\n[ERROR] Review file modified by downstream step!")
                         print(f"  File: {filename}")
                         print(f"  Verified at step: {prev_step}")
                         print(f"  Current step: {step_num}")
                         print(f"  This is a workflow integrity violation.")
+                        write_log(log_file, f"[TAMPER_CHECK] TAMPERING DETECTED: {filename}")
                         log_failure(log_file, step_num, f"Review file tampered: {filename}")
                         sys.exit(1)
+        write_log(log_file, "[TAMPER_CHECK] No tampering detected")
 
         # Compute retry decision
         context = StepContext(
