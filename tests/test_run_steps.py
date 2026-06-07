@@ -13,14 +13,14 @@ import yaml
 
 def test_steps_yaml_valid():
     """Verify steps.yaml is valid YAML with expected structure."""
-    config = yaml.safe_load(open(".setup/steps.yaml"))
+    config = yaml.safe_load(open("template/steps.yaml"))
     assert "commands" in config
     assert len(config["commands"]) >= 10
 
 
 def test_steps_yaml_has_required_fields():
     """Verify each command has required fields."""
-    config = yaml.safe_load(open(".setup/steps.yaml"))
+    config = yaml.safe_load(open("template/steps.yaml"))
     for i, cmd in enumerate(config["commands"]):
         assert "step" in cmd, f"Step {i} missing 'step' field"
         assert ".orchestrator/command/orchestrator." in " ".join(cmd.get("files", [])), (
@@ -115,49 +115,6 @@ def test_cli_new_creates_project():
         assert (project / "._agents_not_allowed" / "steps.yaml").exists()
         assert (project / "._agents_not_allowed" / "run_steps.py").exists()
         assert (project / ".orchestrator" / "command").is_dir()
-
-
-def test_setup_script_help():
-    """Verify old setup.py still works."""
-    import subprocess
-    result = subprocess.run(
-        ["python3", ".setup/setup.py", "--help"],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0
-    assert "--target-dir" in result.stdout
-
-
-def test_setup_creates_valid_project():
-    """Verify old setup.py creates valid project structure."""
-    import subprocess
-    import shutil
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        spec_path = Path(tmpdir) / "spec.md"
-        spec_path.write_text("# Test\n\nA simple test spec.")
-
-        project_dir = Path(tmpdir) / "test-project"
-
-        result = subprocess.run(
-            [
-                "python3", ".setup/setup.py",
-                "--project-name", "test-project",
-                "--spec-path", str(spec_path),
-                "--target-dir", tmpdir,
-            ],
-            capture_output=True,
-            text=True,
-        )
-
-        assert result.returncode == 0, f"setup.py failed: {result.stderr}"
-        assert project_dir.exists()
-        assert (project_dir / "userspec.md").exists()
-        assert (project_dir / "steps.yaml").exists()
-        assert (project_dir / "._agents_not_allowed").is_dir()
-        assert (project_dir / "._agents_not_allowed" / "run_steps.py").exists()
-        assert (project_dir / "._agents_not_allowed" / "steps.yaml").exists()
 
 
 def test_config_has_backend_field():

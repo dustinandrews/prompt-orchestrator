@@ -528,6 +528,15 @@ def build_smolagents_prompt(
     """
     parts = []
 
+    # Add tool usage instructions first
+    parts.append("""You have access to these file operation tools:
+- read_file(path): Read a file from the filesystem
+- write_file(path, content): Write content to a file (creates parent directories)
+- search_files(pattern): Search for files matching a glob pattern
+
+IMPORTANT: Use these tools for ALL file operations. Do NOT use Python's built-in open() function.
+For file paths, use pathlib.Path. Authorized imports: pathlib, os, sys, json, re.""")
+
     if base_message:
         parts.append(base_message)
 
