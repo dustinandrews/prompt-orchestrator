@@ -47,7 +47,9 @@ jobs:
           python-version: "3.12"
       
       - name: Install dependencies
-        run: pip install -e . pytest -q
+        run: |
+          pip install python-dotenv pyyaml -q
+          pip install -e . -q
       
       - name: Run tests
         run: pytest tests/ -v
