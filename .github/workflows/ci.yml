@@ -22,18 +22,13 @@ jobs:
       - name: Validate pyproject.toml
         run: python3 -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"
       
-      - name: Validate steps.yaml
-        run: python3 -c "import yaml; yaml.safe_load(open('.setup/steps.yaml'))"
-      
       - name: Validate template files exist
         run: |
           python3 -c "
           import os
           required = [
             'template/.orchestrator/templates/spec-template.md',
-            'template/.orchestrator/command/orchestrator.specify.md',
-            '.setup/steps.yaml',
-            '.setup/setup.py'
+            'template/.orchestrator/command/orchestrator.specify.md'
           ]
           missing = [f for f in required if not os.path.exists(f)]
           if missing:
