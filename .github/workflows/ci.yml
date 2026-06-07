@@ -47,7 +47,7 @@ jobs:
           python-version: "3.12"
       
       - name: Install dependencies
-        run: pip install pytest pyyaml -q
+        run: pip install -e . pytest -q
       
       - name: Run tests
         run: pytest tests/ -v
