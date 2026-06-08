@@ -8,10 +8,12 @@ Convert the user spec into a formal development spec with user stories and accep
 Fill out `.orchestrator/templates/spec-template.md` and write to `specs/XXX-feature/spec.md`.
 
 **Workflow**:
-1. Parse feature description from $ARGUMENTS
-2. Create branch: `python .setup/run_steps.py create-feature "$ARGUMENTS" --short-name "short-name"`
-3. Fill template → `specs/XXX-feature/spec.md`
-4. STOP — do not write any other files
+1. Read `userspec.md` to get the feature description
+2. Generate a short name (2-4 words) from the description by removing stop words (the, a, an, to, for, etc.)
+3. Create feature: `python .setup/run_steps.py create-feature "<description from userspec.md>" --short-name "<generated-short-name>"`
+4. The command will output `BRANCH_NAME: XXX-short-name` and create `specs/XXX-short-name/spec.md`
+5. Fill the template and write to the created spec file
+6. STOP — do not write any other files
 
 ## Rules
 
