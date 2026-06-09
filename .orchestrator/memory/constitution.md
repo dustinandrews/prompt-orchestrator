@@ -52,14 +52,16 @@ Text I/O ensures debuggability; Structured logging required; MAJOR.MINOR.PATCH v
 
 **Rationale**: Observable systems are maintainable systems. Semantic versioning communicates breaking changes clearly. Simplicity reduces cognitive load and maintenance burden.
 
-### VII. Python and preferred libraries first choice for backend implementation
+### VII. Documented Technology Stack
 
-Primary backend stack: Python>=3.11, LiteLLM, SQLite, Pydantic v2, httpx instead of requests, rich for CLI polish, data transmission in JSON, user config file in simple key=val pairs or yaml, secret keys etc. go in key=val .env file.
-Every project should have a README.md with install instructions and brief examples of use. Typically; create a venv, install requirements, `pip install -e .`, executable --parameters.
+Every project MUST have an explicitly documented technology stack:
+- **NO assumptions**: Do NOT assume Python, TypeScript, Java, Go, or any specific language/framework
+- **HALT if undocumented**: If technology stack is not documented, STOP and ask the user to specify
+- Document in `constitution.md`, `AGENTS.md`, `README.md`, or similar project-level documentation
+- Include: Language(s), build system, key dependencies, deployment target
+- **Project over personal preferences**: Use what the project uses, not what you prefer
 
-**CRITICAL**: Activate the local venv before any pip install. Global pip is forbidden. Use project-relative paths only (`./project/`). Never write to `/tmp` or system temp directories.
-
-**Rationale**: Using battle tested language and libraries ensures reliability. Re-use across projects increases maintainability. 
+**CRITICAL**: When in doubt, ASK THE USER. Never guess the tech stack. 
 
 ### VIII. Never Commit Secrets to Git
 
