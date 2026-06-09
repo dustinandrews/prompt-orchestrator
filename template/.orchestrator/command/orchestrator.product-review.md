@@ -14,11 +14,12 @@ Fill out `.orchestrator/templates/product-review-template.md` and write to `spec
 2. Execute P1 user story manually (golden path)
 3. Verify output matches acceptance criteria
 4. Fill template → `specs/XXX-feature/product-review.md`
+5. IF and ONLY IF status is a PASS, change all the specs for the feature to READ ONLY
 5. STOP — do not write any other files
 
 ## Rules
 
-- **STOP** after product-review.md written
+- **STOP** after product-review.md written and possible READ ONLY locking
 - **Test ONE path**: the main success path only
 - **10 min max**: if validation takes longer, it's too complex
 - **Works > Perfect**: performance/polish come later

@@ -505,7 +505,8 @@ def build_opencode_cmd(
     debug: bool,
     base_message: str,
     extra: tuple,
-    use_continue: bool = True
+    use_continue: bool = True,
+    feature_dir: Optional[Path] = None
 ) -> list:
     """Construct opencode command list."""
     cmd = ["opencode", "run"]
@@ -519,10 +520,15 @@ def build_opencode_cmd(
     if model:
         cmd.extend(["--model", model])
 
+    # Build message with spec context hint if available
+    parts = []
+    if feature_dir:
+        parts.append(f"[SPEC CONTEXT] Latest spec directory: {feature_dir}")
     if base_message:
-        full_message = f"{base_message}"
+        parts.append(base_message)
     if extra:
-        full_message = f"{full_message} {' '.join(extra)}"
+        parts.append(" ".join(extra))
+    full_message = "\n\n".join(parts) if parts else ""
     cmd.append(full_message)
 
     return cmd
@@ -555,7 +561,8 @@ def build_smolagents_prompt(
     debug: bool,
     base_message: str,
     extra: tuple,
-    use_continue: bool = True
+    use_continue: bool = True,
+    feature_dir: Optional[Path] = None
 ) -> str:
     """Assemble prompt from command files for smolagents CodeAgent.
 
@@ -572,6 +579,10 @@ def build_smolagents_prompt(
 
 IMPORTANT: Use these tools for ALL file operations. Do NOT use Python's built-in open() function.
 For file paths, use pathlib.Path. Authorized imports: pathlib, os, sys, json, re.""")
+
+    # Inject spec directory context hint if available
+    if feature_dir:
+        parts.append(f"[SPEC CONTEXT] Latest spec directory: {feature_dir}")
 
     if base_message:
         parts.append(base_message)
@@ -735,7 +746,8 @@ def run_workflow(
         if config.backend == "smolagents":
             prompt = build_smolagents_prompt(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
-                use_continue=use_continue
+                use_continue=use_continue,
+                feature_dir=feature_dir,
             )
             print(f"Executing: {cmd.name} (smolagents)")
             if model:
@@ -744,7 +756,8 @@ def run_workflow(
         else:
             opencode_cmd = build_opencode_cmd(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
-                use_continue=use_continue
+                use_continue=use_continue,
+                feature_dir=feature_dir,
             )
             print(f"Executing: {cmd.name}")
             if model:
