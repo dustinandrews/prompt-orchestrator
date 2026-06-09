@@ -506,7 +506,8 @@ def build_opencode_cmd(
     base_message: str,
     extra: tuple,
     use_continue: bool = True,
-    feature_dir: Optional[Path] = None
+    feature_dir: Optional[Path] = None,
+    constitution_content: Optional[str] = None
 ) -> list:
     """Construct opencode command list."""
     cmd = ["opencode", "run"]
@@ -520,10 +521,12 @@ def build_opencode_cmd(
     if model:
         cmd.extend(["--model", model])
 
-    # Build message with spec context hint if available
+    # Build message with spec context hint and constitution if available
     parts = []
     if feature_dir:
         parts.append(f"[SPEC CONTEXT] Latest spec directory: {feature_dir}")
+    if constitution_content:
+        parts.append(constitution_content)
     if base_message:
         parts.append(base_message)
     if extra:
@@ -562,7 +565,8 @@ def build_smolagents_prompt(
     base_message: str,
     extra: tuple,
     use_continue: bool = True,
-    feature_dir: Optional[Path] = None
+    feature_dir: Optional[Path] = None,
+    constitution_content: Optional[str] = None
 ) -> str:
     """Assemble prompt from command files for smolagents CodeAgent.
 
@@ -583,6 +587,10 @@ For file paths, use pathlib.Path. Authorized imports: pathlib, os, sys, json, re
     # Inject spec directory context hint if available
     if feature_dir:
         parts.append(f"[SPEC CONTEXT] Latest spec directory: {feature_dir}")
+
+    # Inject constitution if available
+    if constitution_content:
+        parts.append(constitution_content)
 
     if base_message:
         parts.append(base_message)
@@ -691,6 +699,14 @@ def run_workflow(
     project_root = log_file.parent.parent  # Go up from ._agents_not_allowed/
     feature_dir = find_feature_dir(project_root)
 
+    # Read constitution if available
+    constitution_path = project_root / ".orchestrator" / "memory" / "constitution.md"
+    constitution_content = None
+    if constitution_path.exists():
+        constitution_content = constitution_path.read_text()
+        print(f"  Loaded constitution: {constitution_path.relative_to(project_root)}")
+        write_log(log_file, f"[INIT] Loaded constitution from {constitution_path}")
+
     # Log initialization details
     write_log(log_file, f"[INIT] Project: {config.project_name}")
     write_log(log_file, f"[INIT] Commands: {len(config.commands)}")
@@ -748,6 +764,7 @@ def run_workflow(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
                 use_continue=use_continue,
                 feature_dir=feature_dir,
+                constitution_content=constitution_content,
             )
             print(f"Executing: {cmd.name} (smolagents)")
             if model:
@@ -758,6 +775,7 @@ def run_workflow(
                 cmd.name, model, cmd.files, config.debug, config.message, extra,
                 use_continue=use_continue,
                 feature_dir=feature_dir,
+                constitution_content=constitution_content,
             )
             print(f"Executing: {cmd.name}")
             if model:
