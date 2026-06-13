@@ -645,17 +645,68 @@ def execute_smolagents(prompt: str, model_str: str | None = None, log_file: Path
         return ExecutionResult(exit_code=1, error_msg=err_msg)
 
     try:
+        from smolagents import LogLevel
+        from smolagents.memory import ActionStep
         from prompt_orchestrator.smolagents_tools import (
             ReadFileTool,
             WriteFileTool,
             SearchFilesTool,
         )
 
+        # Create step callback to log each agent step
+        def log_step_callback(memory_step):
+            """Log each agent step to the workflow log file."""
+            if isinstance(memory_step, ActionStep):
+                step_num = memory_step.step_number
+                
+                # Log step start
+                write_log(log_file, f"[SMOLAGENTS] Step {step_num} started")
+                
+                # Log the action/code if present
+                if hasattr(memory_step, 'code_action') and memory_step.code_action:
+                    action_preview = memory_step.code_action[:200].replace('\n', ' ')
+                    if len(memory_step.code_action) > 200:
+                        action_preview += "..."
+                    write_log(log_file, f"[SMOLAGENTS] Step {step_num} action: {action_preview}")
+                
+                # Log tool calls
+                if hasattr(memory_step, 'tool_calls') and memory_step.tool_calls:
+                    for tool_call in memory_step.tool_calls:
+                        tool_name = getattr(tool_call, 'name', 'unknown')
+                        write_log(log_file, f"[SMOLAGENTS] Step {step_num} tool call: {tool_name}")
+                
+                # Log observations/results
+                if hasattr(memory_step, 'observations') and memory_step.observations:
+                    obs_preview = str(memory_step.observations)[:200].replace('\n', ' ')
+                    if len(str(memory_step.observations)) > 200:
+                        obs_preview += "..."
+                    write_log(log_file, f"[SMOLAGENTS] Step {step_num} observations: {obs_preview}")
+                
+                # Log token usage if available
+                if hasattr(memory_step, 'token_usage') and memory_step.token_usage:
+                    input_tokens = memory_step.token_usage.input_tokens
+                    output_tokens = memory_step.token_usage.output_tokens
+                    write_log(log_file, f"[SMOLAGENTS] Step {step_num} tokens: input={input_tokens}, output={output_tokens}")
+                
+                # Log timing if available
+                if hasattr(memory_step, 'timing') and memory_step.timing:
+                    duration = memory_step.timing.duration
+                    if duration:
+                        write_log(log_file, f"[SMOLAGENTS] Step {step_num} duration: {duration:.2f}s")
+                
+                # Log errors if any
+                if hasattr(memory_step, 'error') and memory_step.error:
+                    write_log(log_file, f"[SMOLAGENTS] Step {step_num} error: {memory_step.error}")
+                
+                write_log(log_file, f"[SMOLAGENTS] Step {step_num} complete")
+
         model = _create_smolagents_model(model_str)
         agent = CodeAgent(
             tools=[ReadFileTool(), WriteFileTool(), SearchFilesTool()],
             model=model,
             additional_authorized_imports=["pathlib", "os", "sys", "json", "re"],
+            step_callbacks=[log_step_callback],
+            verbosity_level=LogLevel.INFO,
         )
         write_log(log_file, "[SMOLAGENTS] Starting agent execution...")
         result = agent.run(prompt)
