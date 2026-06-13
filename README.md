@@ -98,16 +98,6 @@ The scaffold includes an opinionated constitution (`.orchestrator/memory/constit
 
 The workflow enforces these principles via review gates. Plans flagged for over-engineering. Tasks flagged for wrong distribution.
 
-## Context Management Workaround
-
-opencode has a known issue where the `/compact` command requires an interactive terminal. If the session grows too large for the model context:
-
-1. **Ctrl-C** to interrupt
-2. Run `opencode -s` to start interactive session
-3. Type `/compact` and press Enter
-4. Type `/exit` to quit
-5. Resume with `prompt-orchestrator run --step N` (replace N with your current step)
-
 ## Architecture
 
 ```
@@ -139,9 +129,6 @@ get-url --help                                  print this message an quit
 get-url <url>                                   retrieves the URL and writes the contents to SDTOUT
 get-url <url> --out-file <path_to_write>        write URL contents to file as UTF-8
 ```
-
-## Roadmap
-- Replace OpenCode with smolagents.
 
 ## License
 
