@@ -1,6 +1,6 @@
 ---
 description: Run tests and review. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.test-review.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.test-review.
 ---
 
 ## COMMAND: TEST REVIEW

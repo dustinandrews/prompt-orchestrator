@@ -1,6 +1,6 @@
 ---
 description: Create feature specification. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.specify.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.specify.
 ---
 
 ## COMMAND: SPECIFY

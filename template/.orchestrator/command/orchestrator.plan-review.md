@@ -1,6 +1,6 @@
 ---
 description: Review implementation plan. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.plan-review.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.plan-review.
 ---
 
 ## COMMAND: PLAN REVIEW

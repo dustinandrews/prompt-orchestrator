@@ -1,6 +1,6 @@
 ---
 description: Analyze cross-artifact consistency. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.analyze.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.analyze.
 ---
 
 ## COMMAND: ANALYZE
@@ -13,8 +13,8 @@ Read-only analysis. Output report to console only.
 1. Verify tasks.md exists
 2. Read spec.md, plan.md, tasks.md, constitution.md
 3. Check for: duplications, ambiguities, underspecification, constitution violations, coverage gaps, inconsistencies
-4. Output analysis report to console
-5. STOP — do NOT modify any files
+4. Output analysis report to analysis.md
+5. STOP — do NOT modify any other files
 
 ## Rules
 

@@ -1,6 +1,6 @@
 ---
 description: Validate golden path. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.product-review.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.product-review.
 ---
 
 ## COMMAND: PRODUCT REVIEW

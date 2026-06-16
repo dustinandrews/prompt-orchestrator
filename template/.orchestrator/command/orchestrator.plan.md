@@ -1,6 +1,6 @@
 ---
 description: Create implementation plan. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.plan.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.plan.
 ---
 
 ## COMMAND: PLAN

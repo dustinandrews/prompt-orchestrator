@@ -1,6 +1,6 @@
 ---
 description: Implement feature. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.implement.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.implement.
 ---
 
 ## COMMAND: IMPLEMENT

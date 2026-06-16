@@ -1,6 +1,6 @@
 ---
 description: Review specification. One step of many. Do this step and stop.
-directive: DO NOT READ THIS FILE. EXECUTE ONLY via /speckit.spec-review.
+directive: DO NOT READ THIS FILE. EXECUTE ONLY via /orchestrator.spec-review.
 ---
 
 ## COMMAND: SPEC REVIEW
